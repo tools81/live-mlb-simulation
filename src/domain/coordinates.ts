@@ -2,6 +2,7 @@ import {
   STADIUM_BASE_ANCHORS_PX,
   STADIUM_IMAGE_HEIGHT,
   STADIUM_IMAGE_WIDTH,
+  STADIUM_WALL_ANCHORS_PX,
 } from '../config/constants'
 import type { NormalizedPoint, PixelPoint } from './types'
 
@@ -35,18 +36,35 @@ export function normalizedToPixel(point: NormalizedPoint, stageWidth: number, st
 
 /**
  * The stadium art is a stylized forced-perspective drawing, not an orthographic top-down view —
- * distances compress non-linearly toward the outfield fence. A single linear px-per-foot scale
- * (calibrated off the short, precisely-known mound-to-home distance) badly over-extrapolates for
- * deep fly balls and outfielders, pushing them above the visible playing field entirely. Clamping
- * to the grass area keeps every projected point on-stage while preserving relative depth/direction.
+ * distances compress non-linearly toward the outfield fence, and the fence itself is a curved
+ * wall (with stands behind it), not a flat line: it's shallow at the corners and deep in center.
+ * Fitting a quadratic through the three known wall points (left corner, center, right corner)
+ * gives an accurate "how deep can a ball go at this x" boundary — a flat cutoff either lets balls
+ * down the lines fly into the stands, or stops true center-field drives well short of the fence.
  */
-const FIELD_BOUNDS = { minX: 0.03, maxX: 0.97, minY: 0.1, maxY: 0.98 }
+const WALL_MARGIN_PX = 14
+
+export function wallPixelYAtX(pixelX: number): number {
+  const { leftCorner: l, center: c, rightCorner: r } = STADIUM_WALL_ANCHORS_PX
+  const x = Math.min(r.x, Math.max(l.x, pixelX))
+  // Lagrange quadratic interpolation through the three wall anchor points.
+  const l0 = ((x - c.x) * (x - r.x)) / ((l.x - c.x) * (l.x - r.x))
+  const l1 = ((x - l.x) * (x - r.x)) / ((c.x - l.x) * (c.x - r.x))
+  const l2 = ((x - l.x) * (x - c.x)) / ((r.x - l.x) * (r.x - c.x))
+  return l.y * l0 + c.y * l1 + r.y * l2
+}
+
+const FIELD_BOUNDS = {
+  minX: STADIUM_WALL_ANCHORS_PX.leftCorner.x / STADIUM_IMAGE_WIDTH,
+  maxX: STADIUM_WALL_ANCHORS_PX.rightCorner.x / STADIUM_IMAGE_WIDTH,
+  maxY: 0.98,
+}
 
 function clampToField(point: NormalizedPoint): NormalizedPoint {
-  return {
-    x: Math.min(FIELD_BOUNDS.maxX, Math.max(FIELD_BOUNDS.minX, point.x)),
-    y: Math.min(FIELD_BOUNDS.maxY, Math.max(FIELD_BOUNDS.minY, point.y)),
-  }
+  const x = Math.min(FIELD_BOUNDS.maxX, Math.max(FIELD_BOUNDS.minX, point.x))
+  const minY = (wallPixelYAtX(x * STADIUM_IMAGE_WIDTH) + WALL_MARGIN_PX) / STADIUM_IMAGE_HEIGHT
+  const y = Math.min(FIELD_BOUNDS.maxY, Math.max(minY, point.y))
+  return { x, y }
 }
 
 /** movement.start / movement.end / movement.outBase values from the live feed's runners[]. */

@@ -23,6 +23,16 @@ export const STADIUM_BASE_ANCHORS_PX = {
   mound: { x: 724, y: 721 },
 } as const
 
+/**
+ * The outfield wall as drawn in the stadium art — a curved backdrop (with stands behind it), not
+ * a flat line. Used to clamp hit-ball/outfielder placement to stay in front of it.
+ */
+export const STADIUM_WALL_ANCHORS_PX = {
+  leftCorner: { x: 21, y: 250 },
+  center: { x: 726, y: 64 },
+  rightCorner: { x: 1424, y: 250 },
+} as const
+
 export const SETTINGS_STORAGE_KEY = 'mlb-sim:settings'
 
 // import.meta.env.BASE_URL (not a hardcoded leading slash) so these still resolve correctly when
