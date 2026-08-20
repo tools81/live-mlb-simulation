@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { getLiveFeed } from '../api/mlbApi'
 import type { GameFeed } from '../api/types'
 import { AnimationEngine } from '../animation/AnimationEngine'
+import { BASEBALL_ICON_URL, STADIUM_IMAGE_URL } from '../config/constants'
 import { createInitialGameState, INITIAL_CURSOR, type Cursor } from '../domain/types'
 import { hydrateFromLiveFeed } from '../domain/hydrate'
 import { cursorAtEndOf } from '../domain/playDiffer'
@@ -36,7 +37,7 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
 
     async function setup() {
       if (!field) return
-      await Promise.all([field.loadStadiumBackground('/assets/stadium.webp'), field.loadBallTexture('/assets/baseball.svg')])
+      await Promise.all([field.loadStadiumBackground(STADIUM_IMAGE_URL), field.loadBallTexture(BASEBALL_ICON_URL)])
       if (cancelled) return
 
       const initialFeed = await getLiveFeed(gamePk)

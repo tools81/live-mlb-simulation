@@ -24,3 +24,8 @@ export const STADIUM_BASE_ANCHORS_PX = {
 } as const
 
 export const SETTINGS_STORAGE_KEY = 'mlb-sim:settings'
+
+// import.meta.env.BASE_URL (not a hardcoded leading slash) so these still resolve correctly when
+// the app is deployed under a subpath, e.g. GitHub Pages' /live-mlb-simulation/.
+export const STADIUM_IMAGE_URL = `${import.meta.env.BASE_URL}assets/stadium.webp`
+export const BASEBALL_ICON_URL = `${import.meta.env.BASE_URL}assets/baseball.svg`
