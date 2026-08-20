@@ -1,0 +1,120 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.7rem 1.2rem;
+  flex-wrap: wrap;
+}
+
+.teams {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.teamLine {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.teamLine img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.teamLine.batting {
+  color: var(--color-accent);
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  min-width: 1.6em;
+  text-align: right;
+}
+
+.hitsErrors {
+  display: flex;
+  gap: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.inning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 60px;
+}
+
+.inningLabel {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.inningArrow {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.diamond {
+  width: 44px;
+  height: 44px;
+}
+
+.baseOn {
+  fill: var(--color-accent);
+}
+
+.baseOff {
+  fill: var(--color-border);
+}
+
+.counts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.countRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.dotOn {
+  background: var(--color-home);
+}
+
+.dotOnStrike {
+  background: var(--color-warn);
+}
+
+.dotOnOut {
+  background: var(--color-warn);
+}

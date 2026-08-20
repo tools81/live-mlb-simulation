@@ -1,0 +1,36 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1rem;
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.55rem;
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.name {
+  font-weight: 700;
+}
+
+.statLine {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
+.empty {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}

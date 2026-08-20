@@ -1,0 +1,19 @@
+.ticker {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  min-height: 1.4rem;
+  display: flex;
+  align-items: center;
+}
+
+.scoring {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.placeholder {
+  color: var(--color-text-muted);
+}

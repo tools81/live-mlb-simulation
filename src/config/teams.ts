@@ -1,0 +1,5 @@
+/** The 30 standard MLB franchise team IDs, used to pre-fetch every team logo at app load. */
+export const MLB_TEAM_IDS = [
+  108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 133, 134, 135, 136, 137, 138, 139, 140, 141,
+  142, 143, 144, 145, 146, 147, 158,
+]
