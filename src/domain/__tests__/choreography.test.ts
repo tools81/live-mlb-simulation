@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Play, PlayEvent, RunnerMovement } from '../../api/types'
 import { resolveOutcomeChoreography, resolvePitchChoreography } from '../choreography'
+import { FIELDER_POSITIONS_NORMALIZED } from '../coordinates'
 import type { BallFlightStep, RunnerMoveStep, TextPopStep } from '../types'
 
 function makeRunner(overrides: Partial<RunnerMovement> & { runnerId: number }): RunnerMovement {
@@ -99,6 +100,45 @@ describe('resolveOutcomeChoreography', () => {
     const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
     expect(ballFlight).toBeDefined()
     expect(ballFlight!.arcHeight).toBeLessThan(0.1)
+  })
+
+  it('sends a caught fly ball to the fielder who actually caught it, not the raw hit coordinate', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Flyout', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+      playEvents: [
+        {
+          isPitch: true,
+          index: 0,
+          type: 'pitch',
+          details: { isInPlay: true },
+          // Deep and toward right field, but not exactly on the right fielder's rendered spot.
+          hitData: { trajectory: 'fly_ball', totalDistance: 280, coordinates: { coordX: 200, coordY: 80 } },
+        },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
+    expect(ballFlight!.to).toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
+  })
+
+  it('does not redirect a home run fly ball to a fielder, even though it is also a fly_ball trajectory', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Home Run', eventType: 'home_run', awayScore: 1, homeScore: 0 },
+      playEvents: [
+        {
+          isPitch: true,
+          index: 0,
+          type: 'pitch',
+          details: { isInPlay: true },
+          hitData: { trajectory: 'fly_ball', totalDistance: 410, coordinates: { coordX: 200, coordY: 80 } },
+        },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
+    expect(ballFlight!.to).not.toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
   })
 
   it('marks a runner out at the outBase and pops an OUT call, without a ballFlight for a strikeout', () => {

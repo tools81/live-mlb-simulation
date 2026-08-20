@@ -41,9 +41,28 @@ export function resolvePitchChoreography(event: PlayEvent): ChoreographyStep[] {
   ]
 }
 
+const HIT_EVENT_TYPES = new Set(['single', 'double', 'triple', 'home_run'])
+const OUTFIELD_POSITIONS: PositionCode[] = ['7', '8', '9']
+
+function distance(a: NormalizedPoint, b: NormalizedPoint): number {
+  return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
+function nearestOutfielderPosition(point: NormalizedPoint): NormalizedPoint {
+  return OUTFIELD_POSITIONS.map((position) => FIELDER_POSITIONS_NORMALIZED[position]).reduce((nearest, candidate) =>
+    distance(candidate, point) < distance(nearest, point) ? candidate : nearest,
+  )
+}
+
 function ballDestination(play: Play, inPlayEvent: PlayEvent | undefined): NormalizedPoint {
   const coords = inPlayEvent?.hitData?.coordinates
-  if (coords) return normalizeHitCoordinate(coords.coordX, coords.coordY)
+  if (coords) {
+    const point = normalizeHitCoordinate(coords.coordX, coords.coordY)
+    // A caught fly ball (out, not a hit) should visibly land right on the fielder who caught it
+    // rather than at the (approximate) raw hit coordinate.
+    const isFlyOut = inPlayEvent?.hitData?.trajectory === 'fly_ball' && !HIT_EVENT_TYPES.has(play.result.eventType ?? '')
+    return isFlyOut ? nearestOutfielderPosition(point) : point
+  }
 
   for (const runner of play.runners) {
     const putoutCredit = runner.credits?.find((c) => c.credit.includes('putout'))
