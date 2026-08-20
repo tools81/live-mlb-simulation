@@ -68,15 +68,16 @@ export function baseCodeToAnchor(code: BaseCode): NormalizedPoint {
 
 /**
  * hitData.coordinates are on an MLB Gameday ~0-250 grid, not feet. The conversion below uses the
- * commonly-observed community calibration (home plate near (125.42, 198.27), ~2.5 grid units per
- * foot) and is APPROXIMATE — flagged for empirical tuning against real recorded hits.
+ * commonly-observed community calibration (home plate near (125.42, 198.27), ~2.5 FEET per grid
+ * unit — i.e. multiply the coordinate delta by 2.5 to get feet, not divide) and is APPROXIMATE —
+ * flagged for empirical tuning against real recorded hits.
  */
 const HIT_GRID_ORIGIN = { x: 125.42, y: 198.27 }
-const HIT_GRID_UNITS_PER_FOOT = 2.5
+const HIT_GRID_FEET_PER_UNIT = 2.5
 
 export function normalizeHitCoordinate(coordX: number, coordY: number): NormalizedPoint {
-  const xFeet = (coordX - HIT_GRID_ORIGIN.x) / HIT_GRID_UNITS_PER_FOOT
-  const yFeet = (HIT_GRID_ORIGIN.y - coordY) / HIT_GRID_UNITS_PER_FOOT
+  const xFeet = (coordX - HIT_GRID_ORIGIN.x) * HIT_GRID_FEET_PER_UNIT
+  const yFeet = (HIT_GRID_ORIGIN.y - coordY) * HIT_GRID_FEET_PER_UNIT
   return clampToField({
     x: BASE_ANCHORS_NORMALIZED.home.x + (xFeet * PIXELS_PER_FOOT) / STADIUM_IMAGE_WIDTH,
     y: BASE_ANCHORS_NORMALIZED.home.y - (yFeet * PIXELS_PER_FOOT) / STADIUM_IMAGE_HEIGHT,
@@ -98,12 +99,12 @@ export const FIELDER_POSITIONS_NORMALIZED: Record<PositionCode, NormalizedPoint>
   '1': BASE_ANCHORS_NORMALIZED.mound,
   '2': fromHomeFeet(0, -15),
   '3': fromHomeFeet(58, 78),
-  '4': fromHomeFeet(35, 145),
+  '4': fromHomeFeet(35, 110),
   '5': fromHomeFeet(-58, 78),
-  '6': fromHomeFeet(-35, 145),
-  '7': fromHomeFeet(-200, 230),
-  '8': fromHomeFeet(0, 260),
-  '9': fromHomeFeet(200, 230),
+  '6': fromHomeFeet(-35, 110),
+  '7': fromHomeFeet(-100, 160),
+  '8': fromHomeFeet(0, 180),
+  '9': fromHomeFeet(100, 160),
 }
 
 /**

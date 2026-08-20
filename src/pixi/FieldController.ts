@@ -6,7 +6,7 @@ import { BallTrail } from './BallTrail'
 import { SpritePool } from './SpritePool'
 import { getCachedCircularHeadshot } from './textures'
 
-const BATTER_BOX_OFFSET: NormalizedPoint = { x: -0.045, y: 0.005 }
+const BATTER_BOX_OFFSET: NormalizedPoint = { x: -0.025, y: 0.005 }
 const RUNNER_TOKEN_DIAMETER = 44
 const SINGLETON_TOKEN_DIAMETER = 52
 const FIELDER_TOKEN_DIAMETER = 40
