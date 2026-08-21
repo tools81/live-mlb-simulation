@@ -1,4 +1,5 @@
 import { GameCard } from '../../components/GameCard/GameCard'
+import { HEAVY_TOOL_LOGO_URL } from '../../config/constants'
 import { useSchedule } from '../../hooks/useSchedule'
 import styles from './GamePickerPage.module.css'
 
@@ -7,7 +8,10 @@ export function GamePickerPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Live MLB Simulation</h1>
+      <div className={styles.titleRow}>
+        <h1 className={styles.title}>Live MLB Simulation</h1>
+        <img className={styles.logo} src={HEAVY_TOOL_LOGO_URL} alt="Heavy Tool Studios" />
+      </div>
       <p className={styles.subtitle}>Pick a game to jump into the on-field simulation.</p>
 
       {error && <p className={styles.empty}>Couldn't load the schedule: {error.message}</p>}
