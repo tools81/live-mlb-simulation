@@ -1,6 +1,7 @@
 .bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1.5rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -12,7 +13,7 @@
 .teams {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
 .teamLine {
@@ -22,10 +23,27 @@
   font-weight: 700;
 }
 
-.teamLine img {
-  width: 22px;
-  height: 22px;
+.logoWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  width: 34px;
+  height: 34px;
   object-fit: contain;
+}
+
+.batIcon {
+  position: absolute;
+  right: -8px;
+  bottom: -6px;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .teamLine.batting {
@@ -38,15 +56,20 @@
   text-align: right;
 }
 
-.hitsErrors {
+.center {
   display: flex;
-  gap: 1rem;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex: 1;
 }
 
-.spacer {
-  flex: 1;
+.hitsErrors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
 }
 
 .inning {

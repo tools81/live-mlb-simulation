@@ -39,3 +39,4 @@ export const SETTINGS_STORAGE_KEY = 'mlb-sim:settings'
 // the app is deployed under a subpath, e.g. GitHub Pages' /live-mlb-simulation/.
 export const STADIUM_IMAGE_URL = `${import.meta.env.BASE_URL}assets/stadium.webp`
 export const BASEBALL_ICON_URL = `${import.meta.env.BASE_URL}assets/baseball.svg`
+export const BAT_ICON_URL = `${import.meta.env.BASE_URL}assets/baseball_bat.svg`
