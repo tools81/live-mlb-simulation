@@ -12,6 +12,7 @@ export class ReplayGameFeedSource implements GameFeedSource {
   private listeners = new Set<(feed: GameFeed) => void>()
   private timer: ReturnType<typeof setTimeout> | null = null
   private stopped = true
+  private ticking = false
   private fullFeed: GameFeed | null = null
   private revealAtBatIndex = 0
   private revealEventCount = 0
@@ -30,6 +31,14 @@ export class ReplayGameFeedSource implements GameFeedSource {
 
   setInterval(ms: number): void {
     this.intervalMs = ms
+    // If we're just idling between reveals, cancel that stale-duration wait and reschedule with
+    // the new interval right away -- otherwise the change wouldn't take effect until whatever the
+    // *previous* interval's wait happened to expire, which can be many seconds later. While a tick
+    // is actively in flight, leave it alone: it reads `intervalMs` fresh when it reschedules itself.
+    if (!this.stopped && !this.ticking && this.timer) {
+      clearTimeout(this.timer)
+      this.scheduleNext(this.intervalMs)
+    }
   }
 
   start(): void {
@@ -50,6 +59,7 @@ export class ReplayGameFeedSource implements GameFeedSource {
 
   private async tick(): Promise<void> {
     if (this.stopped) return
+    this.ticking = true
     try {
       if (!this.fullFeed) {
         this.fullFeed = await getLiveFeed(this.gamePk)
@@ -64,6 +74,7 @@ export class ReplayGameFeedSource implements GameFeedSource {
     } catch (error) {
       console.error('[ReplayGameFeedSource] tick failed', error)
     } finally {
+      this.ticking = false
       if (!this.stopped && this.hasMore()) this.scheduleNext(this.intervalMs)
     }
   }

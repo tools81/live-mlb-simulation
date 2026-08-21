@@ -66,8 +66,8 @@ export function ScoreBug({ feed, liveState }: ScoreBugProps) {
       </div>
 
       <div className={styles.hitsErrors}>
-        <span>H {feed.liveData.linescore.teams.away.hits}-{feed.liveData.linescore.teams.home.hits}</span>
-        <span>E {feed.liveData.linescore.teams.away.errors}-{feed.liveData.linescore.teams.home.errors}</span>
+        <span>Hits {feed.liveData.linescore.teams.away.hits}-{feed.liveData.linescore.teams.home.hits}</span>
+        <span>Errors {feed.liveData.linescore.teams.away.errors}-{feed.liveData.linescore.teams.home.errors}</span>
       </div>
     </div>
   )

@@ -7,9 +7,11 @@ const REPLAY_PRESETS_MS = [200, 500, 1000, 1500, 3000, 8000]
 
 interface SettingsPanelProps {
   mode: SimulationMode
+  isPaused: boolean
+  onTogglePause: () => void
 }
 
-export function SettingsPanel({ mode }: SettingsPanelProps) {
+export function SettingsPanel({ mode, isPaused, onTogglePause }: SettingsPanelProps) {
   const { settings, setPollIntervalMs, setReplayIntervalMs } = useSettings()
   const presets = mode === 'live' ? LIVE_PRESETS_MS : REPLAY_PRESETS_MS
   const value = mode === 'live' ? settings.pollIntervalMs : settings.replayIntervalMs
@@ -25,6 +27,13 @@ export function SettingsPanel({ mode }: SettingsPanelProps) {
           </option>
         ))}
       </select>
+      <button
+        type="button"
+        className={[styles.pauseButton, isPaused ? styles.paused : ''].join(' ')}
+        onClick={onTogglePause}
+      >
+        {isPaused ? '▶ Resume' : '⏸ Pause'}
+      </button>
     </div>
   )
 }

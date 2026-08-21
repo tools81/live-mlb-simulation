@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { getLiveFeed } from '../api/mlbApi'
 import type { GameFeed } from '../api/types'
 import { AnimationEngine } from '../animation/AnimationEngine'
@@ -19,6 +19,8 @@ export type SimulationMode = 'live' | 'replay'
 export interface UseAnimationEngineResult {
   engine: AnimationEngine | null
   rawFeed: GameFeed | null
+  isPaused: boolean
+  togglePause: () => void
 }
 
 /** Owns the full setup pipeline for one game: loads assets, prefetches the roster, hydrates the initial state, and wires a feed source into the AnimationEngine. StrictMode-safe. */
@@ -28,12 +30,14 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
   const rawFeedStore = useRef(createExternalStore<GameFeed | null>(null)).current
   const rawFeed = useSyncExternalStore(rawFeedStore.subscribe, rawFeedStore.getSnapshot)
   const sourceRef = useRef<GameFeedSource | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
     if (!field) return
     let cancelled = false
     let localEngine: AnimationEngine | null = null
     let source: GameFeedSource | null = null
+    setIsPaused(false)
 
     async function setup() {
       if (!field) return
@@ -88,5 +92,13 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
     sourceRef.current?.setInterval(mode === 'live' ? settings.pollIntervalMs : settings.replayIntervalMs)
   }, [mode, settings.pollIntervalMs, settings.replayIntervalMs])
 
-  return { engine, rawFeed }
+  const togglePause = useCallback(() => {
+    setIsPaused((paused) => {
+      if (paused) sourceRef.current?.start()
+      else sourceRef.current?.stop()
+      return !paused
+    })
+  }, [])
+
+  return { engine, rawFeed, isPaused, togglePause }
 }

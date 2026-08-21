@@ -26,7 +26,7 @@ export function SimulationPage() {
 
   const containerRef = useRef<HTMLDivElement>(null)
   const field = usePixiApp(containerRef)
-  const { engine, rawFeed } = useAnimationEngine(gamePk, mode, field)
+  const { engine, rawFeed, isPaused, togglePause } = useAnimationEngine(gamePk, mode, field)
   const liveState = useLiveGameState(engine)
   const otherLiveGames = useOtherLiveScores(gamePk)
 
@@ -63,7 +63,7 @@ export function SimulationPage() {
             <BatterCard feed={rawFeed} batterId={liveState.batterId} />
             <OnDeckPanel feed={rawFeed} />
             <LiveScoresPanel games={otherLiveGames} />
-            <SettingsPanel mode={mode} />
+            <SettingsPanel mode={mode} isPaused={isPaused} onTogglePause={togglePause} />
           </>
         )}
       </div>

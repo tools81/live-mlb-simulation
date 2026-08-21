@@ -4,13 +4,15 @@ import type { GameFeedSource } from './GameFeedSource'
 
 /**
  * Polls feed/live on an interval, using setTimeout-chaining (never setInterval) so a slow request
- * can't overlap the next one, and so a mid-game interval change takes effect on the next cycle
- * without discarding an in-flight fetch.
+ * can't overlap the next one. A mid-game interval change applies immediately if we're idling
+ * between polls (cancels and reschedules the wait), or on the current fetch's completion if one
+ * is in flight -- either way without discarding that in-flight fetch.
  */
 export class LiveGameFeedSource implements GameFeedSource {
   private listeners = new Set<(feed: GameFeed) => void>()
   private timer: ReturnType<typeof setTimeout> | null = null
   private stopped = true
+  private ticking = false
   private gamePk: number
   private intervalMs: number
 
@@ -26,6 +28,10 @@ export class LiveGameFeedSource implements GameFeedSource {
 
   setInterval(ms: number): void {
     this.intervalMs = ms
+    if (!this.stopped && !this.ticking && this.timer) {
+      clearTimeout(this.timer)
+      this.scheduleNext(this.intervalMs)
+    }
   }
 
   start(): void {
@@ -46,6 +52,7 @@ export class LiveGameFeedSource implements GameFeedSource {
 
   private async tick(): Promise<void> {
     if (this.stopped) return
+    this.ticking = true
     try {
       const feed = await getLiveFeed(this.gamePk)
       if (this.stopped) return
@@ -53,6 +60,7 @@ export class LiveGameFeedSource implements GameFeedSource {
     } catch (error) {
       console.error('[LiveGameFeedSource] poll failed', error)
     } finally {
+      this.ticking = false
       if (!this.stopped) this.scheduleNext(this.intervalMs)
     }
   }
