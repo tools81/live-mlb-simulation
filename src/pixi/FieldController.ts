@@ -253,12 +253,9 @@ export class FieldController {
     const from = this.toPixel(step.from)
     const to = this.toPixel(step.to)
     const arcPx = step.arcHeight * Math.min(this.stageWidth, this.stageHeight)
-    const tint = step.tint ?? 0xffffff
-
     this.ball.visible = true
-    this.ball.tint = tint
     this.ballTrail.reset()
-    this.ballTrail.setTint(tint)
+    this.ballTrail.setTint(step.tint ?? 0xffffff)
 
     await this.tweens.play({
       from: { x: from.x, y: from.y },
