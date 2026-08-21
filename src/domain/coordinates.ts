@@ -21,7 +21,8 @@ export const BASE_ANCHORS_NORMALIZED = {
 /**
  * The official distance from the pitching rubber to home plate (60.5ft) gives an empirical
  * pixels-per-foot scale for this specific stadium image, since both anchor points are known
- * precisely. Used to project hit distances onto the field.
+ * precisely. Used for short (infield) distances and as one calibration point for the outfield
+ * projection below.
  */
 const MOUND_TO_HOME_FEET = 60.5
 const MOUND_TO_HOME_PX = Math.hypot(
@@ -29,6 +30,27 @@ const MOUND_TO_HOME_PX = Math.hypot(
   STADIUM_BASE_ANCHORS_PX.home.y - STADIUM_BASE_ANCHORS_PX.mound.y,
 )
 const PIXELS_PER_FOOT = MOUND_TO_HOME_PX / MOUND_TO_HOME_FEET
+
+/**
+ * The stadium art is a forced-perspective drawing: a single linear px-per-foot scale (e.g. the
+ * short, precise mound-to-home one above) badly OVER-projects outfield distances, since real
+ * depth compresses more and more the farther it gets from the viewer — every fly ball, line
+ * drive, and home run ended up computing a raw position far above the top of the image, which the
+ * wall clamp then pinned to the exact same spot: the wall, every time, regardless of actual depth.
+ *
+ * Fit a power curve `px = a * feet^b` through two known points instead — the same short mound
+ * distance, and the long one from home to the drawn center-field wall (using its "400" ft label)
+ * — which reproduces the compression a linear scale can't.
+ */
+const WALL_CENTER_DEPTH_FEET = 400
+const WALL_CENTER_DEPTH_PX = STADIUM_BASE_ANCHORS_PX.home.y - STADIUM_WALL_ANCHORS_PX.center.y
+const DEPTH_CURVE_EXPONENT =
+  Math.log(WALL_CENTER_DEPTH_PX / MOUND_TO_HOME_PX) / Math.log(WALL_CENTER_DEPTH_FEET / MOUND_TO_HOME_FEET)
+const DEPTH_CURVE_SCALE = MOUND_TO_HOME_PX / Math.pow(MOUND_TO_HOME_FEET, DEPTH_CURVE_EXPONENT)
+
+function feetToRadialPixels(feet: number): number {
+  return DEPTH_CURVE_SCALE * Math.pow(Math.max(0, feet), DEPTH_CURVE_EXPONENT)
+}
 
 export function normalizedToPixel(point: NormalizedPoint, stageWidth: number, stageHeight: number): PixelPoint {
   return { x: point.x * stageWidth, y: point.y * stageHeight }
@@ -88,18 +110,54 @@ export function baseCodeToAnchor(code: BaseCode): NormalizedPoint {
  * hitData.coordinates are on an MLB Gameday ~0-250 grid, not feet. The conversion below uses the
  * commonly-observed community calibration (home plate near (125.42, 198.27), ~2.5 FEET per grid
  * unit — i.e. multiply the coordinate delta by 2.5 to get feet, not divide) and is APPROXIMATE —
- * flagged for empirical tuning against real recorded hits.
+ * flagged for empirical tuning against real recorded hits. Verified against ~50 real plays from a
+ * completed game: this calibration lines up closely with the feed's own `hitData.totalDistance`
+ * for airborne trajectories (fly balls/line drives/popups); ground balls' `totalDistance` isn't a
+ * comparable quantity so it's not used to sanity-check those.
  */
 const HIT_GRID_ORIGIN = { x: 125.42, y: 198.27 }
 const HIT_GRID_FEET_PER_UNIT = 2.5
 
+/** The real-world (xFeet, yFeet) offset from home plate a raw hit coordinate represents. */
+function hitFeetOffset(coordX: number, coordY: number): { xFeet: number; yFeet: number } {
+  return {
+    xFeet: (coordX - HIT_GRID_ORIGIN.x) * HIT_GRID_FEET_PER_UNIT,
+    yFeet: (HIT_GRID_ORIGIN.y - coordY) * HIT_GRID_FEET_PER_UNIT,
+  }
+}
+
 export function normalizeHitCoordinate(coordX: number, coordY: number): NormalizedPoint {
-  const xFeet = (coordX - HIT_GRID_ORIGIN.x) * HIT_GRID_FEET_PER_UNIT
-  const yFeet = (HIT_GRID_ORIGIN.y - coordY) * HIT_GRID_FEET_PER_UNIT
+  const { xFeet, yFeet } = hitFeetOffset(coordX, coordY)
+  const radiusFeet = Math.hypot(xFeet, yFeet)
+  if (radiusFeet === 0) return BASE_ANCHORS_NORMALIZED.home
+
+  const radiusPx = feetToRadialPixels(radiusFeet)
   return clampToField({
-    x: BASE_ANCHORS_NORMALIZED.home.x + (xFeet * PIXELS_PER_FOOT) / STADIUM_IMAGE_WIDTH,
-    y: BASE_ANCHORS_NORMALIZED.home.y - (yFeet * PIXELS_PER_FOOT) / STADIUM_IMAGE_HEIGHT,
+    x: BASE_ANCHORS_NORMALIZED.home.x + ((xFeet / radiusFeet) * radiusPx) / STADIUM_IMAGE_WIDTH,
+    y: BASE_ANCHORS_NORMALIZED.home.y - ((yFeet / radiusFeet) * radiusPx) / STADIUM_IMAGE_HEIGHT,
   })
+}
+
+const HOME_RUN_OVER_WALL_MARGIN_PX = 24
+
+/**
+ * A home run must visibly clear the fence, not just approach it — but its raw projected distance
+ * doesn't reliably exceed the wall's curve at every angle (the wall is much shallower down the
+ * lines than in center). So instead of projecting a distance, this keeps only the hit's direction
+ * and places it a fixed margin beyond the wall's curve at that angle, guaranteeing every home run
+ * clears the fence it's hit toward.
+ */
+export function homeRunLandingSpot(coordX: number, coordY: number): NormalizedPoint {
+  const { xFeet, yFeet } = hitFeetOffset(coordX, coordY)
+  const radiusFeet = Math.hypot(xFeet, yFeet) || 1
+  const lateralUnit = xFeet / radiusFeet
+
+  const farPx = STADIUM_IMAGE_HEIGHT * 2
+  const rawX = BASE_ANCHORS_NORMALIZED.home.x * STADIUM_IMAGE_WIDTH + lateralUnit * farPx
+  const x = Math.min(STADIUM_WALL_ANCHORS_PX.rightCorner.x, Math.max(STADIUM_WALL_ANCHORS_PX.leftCorner.x, rawX))
+  const y = Math.max(4, wallPixelYAtX(x) - HOME_RUN_OVER_WALL_MARGIN_PX)
+
+  return { x: x / STADIUM_IMAGE_WIDTH, y: y / STADIUM_IMAGE_HEIGHT }
 }
 
 /** Standard MLB position codes: 1=P 2=C 3=1B 4=2B 5=3B 6=SS 7=LF 8=CF 9=RF */

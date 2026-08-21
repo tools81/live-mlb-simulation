@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { STADIUM_IMAGE_HEIGHT, STADIUM_IMAGE_WIDTH, STADIUM_WALL_ANCHORS_PX } from '../../config/constants'
-import { BASE_ANCHORS_NORMALIZED, normalizeHitCoordinate, wallPixelYAtX } from '../coordinates'
+import { BASE_ANCHORS_NORMALIZED, homeRunLandingSpot, normalizeHitCoordinate, wallPixelYAtX } from '../coordinates'
 
 function normalizedDistance(a: { x: number; y: number }, b: { x: number; y: number }): number {
   return Math.hypot(a.x - b.x, a.y - b.y)
@@ -39,6 +39,54 @@ describe('normalizeHitCoordinate', () => {
     const deepCenter = normalizeHitCoordinate(125.42, -50)
     const wallYAtCenter = wallPixelYAtX(deepCenter.x * STADIUM_IMAGE_WIDTH)
     expect(deepCenter.y * STADIUM_IMAGE_HEIGHT).toBeGreaterThanOrEqual(wallYAtCenter)
+  })
+
+  it('does not clamp routine (non-wall-reaching) hits to the wall, unlike a naive linear projection', () => {
+    // Real coordinates/trajectories pulled from a completed game, each well short of any fence.
+    const samples: { name: string; coordX: number; coordY: number }[] = [
+      { name: 'shallow popup', coordX: 95.49, coordY: 190.11 },
+      { name: 'medium fly ball', coordX: 194.69, coordY: 122.54 },
+      { name: 'line drive single', coordX: 158.04, coordY: 110.96 },
+      { name: 'deep fly out', coordX: 160.91, coordY: 73.91 },
+    ]
+
+    for (const { name, coordX, coordY } of samples) {
+      const point = normalizeHitCoordinate(coordX, coordY)
+      const wallY = wallPixelYAtX(point.x * STADIUM_IMAGE_WIDTH)
+      // Well clear of the wall line, not pinned right against it.
+      expect(point.y * STADIUM_IMAGE_HEIGHT, name).toBeGreaterThan(wallY + 40)
+    }
+  })
+
+  it('places two different-depth fly balls at two different depths, not both at the wall', () => {
+    const shallow = normalizeHitCoordinate(194.69, 122.54) // ~256ft real fly out
+    const deep = normalizeHitCoordinate(160.91, 73.91) // ~324ft real fly out
+    expect(normalizedDistance(deep, BASE_ANCHORS_NORMALIZED.home)).toBeGreaterThan(
+      normalizedDistance(shallow, BASE_ANCHORS_NORMALIZED.home),
+    )
+  })
+})
+
+describe('homeRunLandingSpot', () => {
+  it('always lands beyond the wall curve at that x, for hits toward either line and center', () => {
+    const samples: { name: string; coordX: number; coordY: number }[] = [
+      { name: 'left field grand slam', coordX: 33.83, coordY: 85.61 },
+      { name: 'center field homer', coordX: 107.66, coordY: 27.88 },
+      { name: 'right field homer', coordX: 194.69, coordY: 60 },
+    ]
+
+    for (const { name, coordX, coordY } of samples) {
+      const point = homeRunLandingSpot(coordX, coordY)
+      const wallY = wallPixelYAtX(point.x * STADIUM_IMAGE_WIDTH)
+      // Smaller pixel y = deeper into the field, i.e. past the wall from home's perspective.
+      expect(point.y * STADIUM_IMAGE_HEIGHT, name).toBeLessThan(wallY)
+    }
+  })
+
+  it('sends a homer toward left field to the left of one toward right field', () => {
+    const leftField = homeRunLandingSpot(33.83, 85.61)
+    const rightField = homeRunLandingSpot(210, 85.61)
+    expect(leftField.x).toBeLessThan(rightField.x)
   })
 })
 

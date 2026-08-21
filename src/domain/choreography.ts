@@ -4,6 +4,7 @@ import {
   BASE_ANCHORS_NORMALIZED,
   FIELDER_POSITIONS_NORMALIZED,
   expandBasePath,
+  homeRunLandingSpot,
   normalizeHitCoordinate,
   type BaseCode,
   type PositionCode,
@@ -107,7 +108,11 @@ function creditedFielderChain(play: Play): PositionCode[] {
 /** Where the batted ball actually lands/is fielded — the raw (approximate) hit coordinate. */
 function ballDestination(play: Play, inPlayEvent: PlayEvent | undefined): NormalizedPoint {
   const coords = inPlayEvent?.hitData?.coordinates
-  if (coords) return normalizeHitCoordinate(coords.coordX, coords.coordY)
+  if (coords) {
+    // A home run must visibly clear the fence, not just approach it -- see homeRunLandingSpot.
+    if (play.result.eventType === 'home_run') return homeRunLandingSpot(coords.coordX, coords.coordY)
+    return normalizeHitCoordinate(coords.coordX, coords.coordY)
+  }
 
   const chain = creditedFielderChain(play)
   if (chain.length > 0) return FIELDER_POSITIONS_NORMALIZED[chain[0]]
