@@ -8,6 +8,7 @@ function makeRunner(overrides: Partial<RunnerMovement> & { runnerId: number }): 
   return {
     movement: { start: null, end: null, outBase: null, isOut: false, ...overrides.movement },
     details: { runner: { id: overrides.runnerId }, isScoringEvent: false, ...overrides.details },
+    credits: overrides.credits,
   }
 }
 
@@ -197,6 +198,51 @@ describe('resolveOutcomeChoreography', () => {
     expect(outCall).toBeDefined()
     // ground outs move a fielder to field the ball too, not just fly outs
     expect(steps.some((s) => s.kind === 'fielderMove')).toBe(true)
+  })
+
+  it('relays the ball from the fielding fielder to the putout fielder before either resets ("3B to 1B")', () => {
+    // Mirrors a real "Matt McLain grounds out, third baseman Blaze Jordan to first baseman Alec
+    // Burleson" play's actual credits shape.
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Groundout', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+      runners: [
+        makeRunner({
+          runnerId: 7,
+          movement: { start: null, end: null, outBase: '1B', isOut: true, outNumber: 2 },
+          credits: [
+            { position: { code: '5' }, credit: 'f_assist' },
+            { position: { code: '3' }, credit: 'f_putout' },
+          ],
+        }),
+      ],
+      playEvents: [
+        {
+          isPitch: true,
+          index: 0,
+          type: 'pitch',
+          details: { isInPlay: true },
+          hitData: { trajectory: 'ground_ball', totalDistance: 51, coordinates: { coordX: 104.62, coordY: 167.8 } },
+        },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const fielderSteps = steps.filter((s): s is FielderMoveStep => s.kind === 'fielderMove')
+
+    // Only the fielding fielder (3B) moves -- never the receiving one (1B).
+    expect(fielderSteps).toHaveLength(2)
+    expect(fielderSteps.every((s) => s.position === '5')).toBe(true)
+    expect(fielderSteps[1].to).toEqual(FIELDER_POSITIONS_NORMALIZED['5'])
+
+    // The relay throw goes from where the ball was fielded to 1B's own spot, after the initial
+    // batted-ball flight and before the fielder's return trip.
+    const allBallFlights = steps.filter((s): s is BallFlightStep => s.kind === 'ballFlight')
+    expect(allBallFlights).toHaveLength(2)
+    const [initial, relay] = allBallFlights
+    expect(relay.from).toEqual(initial.to)
+    expect(relay.to).toEqual(FIELDER_POSITIONS_NORMALIZED['3'])
+    expect(relay.group).toBeGreaterThan(initial.group)
+    expect(fielderSteps[1].group).toBeGreaterThan(relay.group)
   })
 
   it('adds a celebration step for a home run', () => {

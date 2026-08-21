@@ -56,29 +56,31 @@ function nearestFielderPosition(point: NormalizedPoint): PositionCode {
   )
 }
 
+/**
+ * The fielders credited on this play, in the feed's own order — which is the actual chronological
+ * order of the play (e.g. "third baseman X to first baseman Y" -> credits list the 3B assist
+ * before the 1B putout). Empty if the feed has no credits at all (rare/older data).
+ */
+function creditedFielderChain(play: Play): PositionCode[] {
+  for (const runner of play.runners) {
+    if (!runner.credits || runner.credits.length === 0) continue
+    const codes = runner.credits
+      .filter((c) => c.credit.includes('assist') || c.credit.includes('putout'))
+      .map((c) => c.position.code)
+      .filter((code): code is PositionCode => (ALL_FIELDER_POSITIONS as string[]).includes(code))
+    if (codes.length > 0) return codes
+  }
+  return []
+}
+
 /** Where the batted ball actually lands/is fielded — the raw (approximate) hit coordinate. */
 function ballDestination(play: Play, inPlayEvent: PlayEvent | undefined): NormalizedPoint {
   const coords = inPlayEvent?.hitData?.coordinates
   if (coords) return normalizeHitCoordinate(coords.coordX, coords.coordY)
 
-  for (const runner of play.runners) {
-    const putoutCredit = runner.credits?.find((c) => c.credit.includes('putout'))
-    if (putoutCredit) {
-      const position = FIELDER_POSITIONS_NORMALIZED[putoutCredit.position.code as PositionCode]
-      if (position) return position
-    }
-  }
+  const chain = creditedFielderChain(play)
+  if (chain.length > 0) return FIELDER_POSITIONS_NORMALIZED[chain[0]]
   return FIELDER_POSITIONS_NORMALIZED['6']
-}
-
-/** Which fielder made the play — prefer the feed's own putout credit, else whoever's rendered closest to the ball. */
-function responsibleFielderPosition(play: Play, ballPoint: NormalizedPoint): PositionCode {
-  for (const runner of play.runners) {
-    const putoutCredit = runner.credits?.find((c) => c.credit.includes('putout'))
-    const code = putoutCredit?.position.code
-    if (code && (ALL_FIELDER_POSITIONS as string[]).includes(code)) return code as PositionCode
-  }
-  return nearestFielderPosition(ballPoint)
 }
 
 function arcHeightFor(trajectory: string | undefined, isHomeRun: boolean): number {
@@ -127,6 +129,7 @@ function trailTintFor(trajectory: string | undefined, isHomeRun: boolean): numbe
  * flourishes (K graphic, home run celebration, out call).
  */
 const FIELDER_RETURN_DURATION_MS = 600
+const THROW_DURATION_MS = 450
 
 export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
   const steps: ChoreographyStep[] = []
@@ -156,28 +159,51 @@ export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
     })
 
     // On an out (fly out, pop out, line out, ground out), the fielder who made the play visibly
-    // moves to meet the ball rather than the ball snapping to them, then jogs back afterward.
+    // moves to meet the ball rather than the ball snapping to them. When the feed credits more
+    // than one fielder (e.g. "third baseman X to first baseman Y"), the ball is relayed/thrown
+    // fielder to fielder in credited order before the fielder who left their spot returns to it.
     if (!isHit) {
-      const position = responsibleFielderPosition(play, destination)
+      const chain = creditedFielderChain(play)
+      const fielderChain = chain.length > 0 ? chain : [nearestFielderPosition(destination)]
+
       steps.push({
         kind: 'fielderMove',
         group,
-        position,
+        position: fielderChain[0],
         to: destination,
         durationMs: flightDurationMs,
         easing: Easing.easeInOutQuad,
       })
+
+      let throwFrom = destination
+      for (let i = 1; i < fielderChain.length; i++) {
+        group += 1
+        const receiverPoint = FIELDER_POSITIONS_NORMALIZED[fielderChain[i]]
+        steps.push({
+          kind: 'ballFlight',
+          group,
+          from: throwFrom,
+          to: receiverPoint,
+          arcHeight: 0.03,
+          spin: true,
+          durationMs: THROW_DURATION_MS,
+          easing: Easing.easeInOutQuad,
+        })
+        throwFrom = receiverPoint
+      }
+
+      group += 1
       steps.push({
         kind: 'fielderMove',
-        group: group + 1,
-        position,
-        to: FIELDER_POSITIONS_NORMALIZED[position],
+        group,
+        position: fielderChain[0],
+        to: FIELDER_POSITIONS_NORMALIZED[fielderChain[0]],
         durationMs: FIELDER_RETURN_DURATION_MS,
         easing: Easing.easeInOutQuad,
       })
+    } else {
+      group += 1
     }
-
-    group += 1
   }
 
   if (isStrikeout) {
