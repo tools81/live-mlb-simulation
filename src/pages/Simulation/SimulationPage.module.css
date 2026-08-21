@@ -75,7 +75,11 @@
 
 @media (max-width: 900px) {
   .layout {
-    grid-template-columns: 1fr;
+    /* A bare 1fr track has an implicit `auto` minimum, so it can grow past the viewport to fit
+       its content's intrinsic size -- exactly what happens here, since a freshly-created canvas
+       defaults to 800x600 before Pixi's resize logic can shrink it. minmax(0, 1fr) (already used
+       on desktop's field column) clamps it to the actual available width instead. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto;
     grid-template-areas:
       'scorebug'
@@ -86,6 +90,12 @@
   }
 
   .field {
-    min-height: 420px;
+    /* Without a bounded height, the mobile grid row is just `auto` -- the stage div has no
+       definite height to resolve its own height:100% against, so PixiJS's ResizeObserver reads
+       the canvas's own stale default size back off the container. Deriving height from the
+       (now correctly clamped) width via the stadium art's own aspect ratio (1448x1086 = 4:3)
+       gives it a definite, undistorted size. */
+    min-height: 0;
+    aspect-ratio: 4 / 3;
   }
 }

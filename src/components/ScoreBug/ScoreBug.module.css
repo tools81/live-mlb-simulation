@@ -135,3 +135,42 @@
 .dotOnOut {
   background: var(--color-warn);
 }
+
+@media (max-width: 900px) {
+  /* The desktop bar is one wide row (teams | game state | hits/errors) with room to spare --
+     on a phone that only fits by relying on flex-wrap's default line-breaking, which staggers
+     the game-state block hard against the left edge and leaves an awkward gap before hits/errors.
+     Stacking deliberately into three centered rows reads far better at this width. */
+  .bar {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .teams {
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .center {
+    flex: none;
+    gap: 1rem;
+  }
+
+  .hitsErrors {
+    flex-direction: row;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+
+  .logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .batIcon {
+    height: 21px;
+  }
+}
