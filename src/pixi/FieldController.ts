@@ -382,10 +382,11 @@ export class FieldController {
 
   async showTextPop(step: TextPopStep): Promise<void> {
     const point = this.toPixel(step.at)
-    const color = step.tone === 'out' ? 0xe0483e : step.tone === 'good' ? 0x3ecf8e : 0xffffff
+    const color =
+      step.tone === 'out' ? 0xe0483e : step.tone === 'good' ? 0x3ecf8e : step.tone === 'homerun' ? 0xffd54a : 0xffffff
     const text = new Text({
       text: step.text,
-      style: { fill: color, fontSize: 36, fontWeight: 'bold', stroke: { color: 0x000000, width: 4 } },
+      style: { fill: color, fontSize: step.fontSize ?? 36, fontWeight: 'bold', stroke: { color: 0x000000, width: 4 } },
     })
     text.anchor.set(0.5)
     text.position.set(point.x, point.y)

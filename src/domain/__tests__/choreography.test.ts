@@ -383,6 +383,45 @@ describe('resolveOutcomeChoreography', () => {
     expect(ballFlight?.tint).toBe(0xffd54a)
   })
 
+  it('flashes HOMERUN and the distance traveled, both in the same group as the celebration', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Home Run', eventType: 'home_run', awayScore: 1, homeScore: 0 },
+      runners: [makeRunner({ runnerId: 1, movement: { start: null, end: 'score', outBase: null, isOut: false }, details: { runner: { id: 1 }, isScoringEvent: true } })],
+      playEvents: [
+        { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory: 'fly_ball', totalDistance: 410.4, coordinates: { coordX: 125, coordY: 20 } } },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const celebration = steps.find((s) => s.kind === 'celebration')
+    const textPops = steps.filter((s): s is TextPopStep => s.kind === 'textPop')
+
+    const flash = textPops.find((s) => s.text === 'HOMERUN')
+    expect(flash).toBeDefined()
+    expect(flash?.tone).toBe('homerun')
+    expect(flash?.group).toBe(celebration?.group)
+
+    const distance = textPops.find((s) => s.text === '410 ft')
+    expect(distance).toBeDefined()
+    expect(distance?.tone).toBe('homerun')
+    expect(distance?.group).toBe(celebration?.group)
+  })
+
+  it('flashes HOMERUN with no distance line when the feed has no totalDistance', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Home Run', eventType: 'home_run', awayScore: 1, homeScore: 0 },
+      runners: [makeRunner({ runnerId: 1, movement: { start: null, end: 'score', outBase: null, isOut: false }, details: { runner: { id: 1 }, isScoringEvent: true } })],
+      playEvents: [
+        { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory: 'fly_ball', coordinates: { coordX: 125, coordY: 20 } } },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const textPops = steps.filter((s): s is TextPopStep => s.kind === 'textPop')
+    expect(textPops.some((s) => s.text === 'HOMERUN')).toBe(true)
+    expect(textPops.some((s) => s.text.endsWith('ft'))).toBe(false)
+  })
+
   it('tints the ball trail by batted-ball trajectory, and kicks up grass only on ground balls', () => {
     const trajectories: { trajectory: string; expectedTint: number }[] = [
       { trajectory: 'ground_ball', expectedTint: 0x5fd15f },

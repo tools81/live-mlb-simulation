@@ -23,6 +23,12 @@ const UMPIRE_CALL_POSITION: NormalizedPoint = {
 }
 const PITCH_CALL_POP_DURATION_MS = 600
 
+// Center-screen, shallow outfield -- big enough a moment that it reads as a scoreboard flash
+// rather than a small pop tucked at home plate under the runner/confetti action.
+const HOME_RUN_FLASH_POSITION: NormalizedPoint = { x: 0.5, y: 0.42 }
+const HOME_RUN_DISTANCE_POSITION: NormalizedPoint = { x: 0.5, y: 0.42 + 0.07 }
+const HOME_RUN_FLASH_DURATION_MS = 1400
+
 const FT_PER_SEC_PER_MPH = 1.467
 const PITCH_TRAVEL_DISTANCE_FT = 55
 
@@ -344,6 +350,27 @@ export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
       at: BASE_ANCHORS_NORMALIZED.home,
       durationMs: 1200,
     })
+    steps.push({
+      kind: 'textPop',
+      group,
+      text: 'HOMERUN',
+      at: HOME_RUN_FLASH_POSITION,
+      tone: 'homerun',
+      fontSize: 56,
+      durationMs: HOME_RUN_FLASH_DURATION_MS,
+    })
+    const totalDistanceFt = inPlayEvent?.hitData?.totalDistance
+    if (totalDistanceFt) {
+      steps.push({
+        kind: 'textPop',
+        group,
+        text: `${Math.round(totalDistanceFt)} ft`,
+        at: HOME_RUN_DISTANCE_POSITION,
+        tone: 'homerun',
+        fontSize: 28,
+        durationMs: HOME_RUN_FLASH_DURATION_MS,
+      })
+    }
   }
 
   return steps

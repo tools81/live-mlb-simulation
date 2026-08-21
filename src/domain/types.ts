@@ -118,7 +118,9 @@ export interface TextPopStep extends BaseStep {
   kind: 'textPop'
   text: string
   at: NormalizedPoint
-  tone: 'neutral' | 'out' | 'good'
+  tone: 'neutral' | 'out' | 'good' | 'homerun'
+  /** Overrides the default pop font size (e.g. a larger flash for "HOMERUN"). */
+  fontSize?: number
 }
 
 export interface CelebrationStep extends BaseStep {
