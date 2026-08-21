@@ -29,6 +29,17 @@ export class ReplayGameFeedSource implements GameFeedSource {
     return () => this.listeners.delete(listener)
   }
 
+  isExhausted(): boolean {
+    if (!this.fullFeed) return false
+    const allPlays = this.fullFeed.liveData.plays.allPlays
+    if (this.revealAtBatIndex >= allPlays.length) return true
+    // `tick()` calls `advanceReveal()` before building the snapshot a listener receives, so by the
+    // time a listener (and thus this) runs, this state already reflects that snapshot correctly.
+    if (this.revealAtBatIndex !== allPlays.length - 1) return false
+    const current = allPlays[this.revealAtBatIndex]
+    return this.revealEventCount >= current.playEvents.length && current.about.isComplete
+  }
+
   setInterval(ms: number): void {
     this.intervalMs = ms
     // If we're just idling between reveals, cancel that stale-duration wait and reschedule with
@@ -66,10 +77,16 @@ export class ReplayGameFeedSource implements GameFeedSource {
       }
       if (this.stopped) return
 
+      // Advance *before* building the snapshot, so a play's fully-revealed (isComplete: true)
+      // moment is itself something a listener can observe, not just an instant that gets skipped
+      // over on the way to the next play. That distinction only bites for a game's very last play:
+      // every earlier play's completion is also visible (redundantly) once it lands in the next
+      // play's `revealed` prefix, but the last play has no "next" tick to expose it that way --
+      // without this, the final out of every replayed game would never resolve at all.
+      this.advanceReveal()
       const snapshot = this.buildSnapshot()
       if (snapshot) {
         for (const listener of this.listeners) listener(snapshot)
-        this.advanceCursor()
       }
     } catch (error) {
       console.error('[ReplayGameFeedSource] tick failed', error)
@@ -91,12 +108,11 @@ export class ReplayGameFeedSource implements GameFeedSource {
 
     const revealed = allPlays.slice(0, this.revealAtBatIndex)
     const current = allPlays[this.revealAtBatIndex]
-    const revealedEventCount = Math.min(this.revealEventCount, current.playEvents.length)
-    const isFullyRevealed = revealedEventCount >= current.playEvents.length
+    const isFullyRevealed = this.revealEventCount >= current.playEvents.length
 
     const partialPlay: Play = {
       ...current,
-      playEvents: current.playEvents.slice(0, revealedEventCount),
+      playEvents: current.playEvents.slice(0, this.revealEventCount),
       about: { ...current.about, isComplete: isFullyRevealed && current.about.isComplete },
     }
     revealed.push(partialPlay)
@@ -110,12 +126,16 @@ export class ReplayGameFeedSource implements GameFeedSource {
     }
   }
 
-  private advanceCursor(): void {
+  /** Moves the reveal cursor forward by exactly one unit: reveals one more event of the current
+   * play, or -- once that play has already been shown fully revealed in its own snapshot -- steps
+   * to the next play. */
+  private advanceReveal(): void {
     if (!this.fullFeed) return
     const current = this.fullFeed.liveData.plays.allPlays[this.revealAtBatIndex]
     if (!current) return
-    this.revealEventCount += 1
-    if (this.revealEventCount >= current.playEvents.length) {
+    if (this.revealEventCount < current.playEvents.length) {
+      this.revealEventCount += 1
+    } else {
       this.revealAtBatIndex += 1
       this.revealEventCount = 0
     }

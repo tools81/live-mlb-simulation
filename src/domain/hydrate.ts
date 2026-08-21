@@ -24,5 +24,6 @@ export function hydrateFromLiveFeed(feed: GameFeed): GameState {
     pitcherId: linescore.defense.pitcher?.id ?? null,
     lastPlayDescription: currentPlay?.result.description ?? null,
     isScoringPlay: currentPlay?.about.isScoringPlay ?? false,
+    isGameOver: feed.gameData.status.abstractGameState === 'Final',
   }
 }

@@ -13,6 +13,7 @@ export class LiveGameFeedSource implements GameFeedSource {
   private timer: ReturnType<typeof setTimeout> | null = null
   private stopped = true
   private ticking = false
+  private gameIsFinal = false
   private gamePk: number
   private intervalMs: number
 
@@ -24,6 +25,10 @@ export class LiveGameFeedSource implements GameFeedSource {
   subscribe(listener: (feed: GameFeed) => void): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
+  }
+
+  isExhausted(): boolean {
+    return this.gameIsFinal
   }
 
   setInterval(ms: number): void {
@@ -56,6 +61,7 @@ export class LiveGameFeedSource implements GameFeedSource {
     try {
       const feed = await getLiveFeed(this.gamePk)
       if (this.stopped) return
+      this.gameIsFinal = feed.gameData.status.abstractGameState === 'Final'
       for (const listener of this.listeners) listener(feed)
     } catch (error) {
       console.error('[LiveGameFeedSource] poll failed', error)

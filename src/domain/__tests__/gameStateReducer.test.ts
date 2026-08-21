@@ -122,4 +122,15 @@ describe('gameStateReducer', () => {
     expect(next.inning).toBe(4)
     expect(next.half).toBe('bottom')
   })
+
+  it('marks the game over, idempotently', () => {
+    const state = createInitialGameState()
+    expect(state.isGameOver).toBe(false)
+
+    const ended = gameStateReducer(state, { type: 'gameEnded' })
+    expect(ended.isGameOver).toBe(true)
+
+    const endedAgain = gameStateReducer(ended, { type: 'gameEnded' })
+    expect(endedAgain).toBe(ended)
+  })
 })

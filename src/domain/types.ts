@@ -29,6 +29,9 @@ export interface GameState {
   pitcherId: number | null
   lastPlayDescription: string | null
   isScoringPlay: boolean
+  /** True once the simulation has animated all the way through a completed game -- not just that
+   * the real game is over, but that we've actually caught up to its final play. */
+  isGameOver: boolean
 }
 
 export function createInitialGameState(): GameState {
@@ -46,6 +49,7 @@ export function createInitialGameState(): GameState {
     pitcherId: null,
     lastPlayDescription: null,
     isScoringPlay: false,
+    isGameOver: false,
   }
 }
 

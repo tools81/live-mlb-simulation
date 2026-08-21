@@ -69,7 +69,7 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
 
       source.subscribe((feed) => {
         rawFeedStore.set(feed)
-        cursor = localEngine!.ingest(feed, cursor)
+        cursor = localEngine!.ingest(feed, cursor, source!.isExhausted())
       })
       source.start()
     }

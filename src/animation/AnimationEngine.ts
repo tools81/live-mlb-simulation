@@ -26,6 +26,7 @@ export class AnimationEngine {
   private draining = false
   private allPlaysSeen: Play[] = []
   private latestLinescore: Linescore | null = null
+  private sourceExhausted = false
   private field: FieldController
   private mode: Mode
 
@@ -55,10 +56,11 @@ export class AnimationEngine {
     this.emit()
   }
 
-  /** Feeds a fresh feed snapshot (live poll or a synthesized replay tick) in against the given cursor, returning the cursor to store for next time. */
-  ingest(feed: GameFeed, cursor: Cursor): Cursor {
+  /** Feeds a fresh feed snapshot (live poll or a synthesized replay tick) in against the given cursor, returning the cursor to store for next time. `sourceExhausted` reports whether the feed source has (or ever will) run out of further plays. */
+  ingest(feed: GameFeed, cursor: Cursor, sourceExhausted: boolean): Cursor {
     this.allPlaysSeen = feed.liveData.plays.allPlays
     this.latestLinescore = this.mode === 'live' ? feed.liveData.linescore : null
+    this.sourceExhausted = sourceExhausted
 
     const diff = diffFeed(feed.liveData.plays.allPlays, cursor)
     this.queue.enqueueAll(diff.newItems)
@@ -74,6 +76,13 @@ export class AnimationEngine {
       await this.processItem(item)
     }
     this.draining = false
+
+    // Only once every queued item has actually been animated, not merely received, does the
+    // simulation itself count as "finished" -- this is what lets the UI wait for the last play to
+    // visually resolve before showing FINAL, rather than jumping ahead of the animation.
+    if (this.sourceExhausted && !this.state.isGameOver) {
+      this.setState(gameStateReducer(this.state, { type: 'gameEnded' }))
+    }
   }
 
   private async processItem(item: QueueItem): Promise<void> {

@@ -22,7 +22,8 @@ function Dots({ count, max, className }: { count: number; max: number; className
 
 export function ScoreBug({ feed, liveState }: ScoreBugProps) {
   const { teams } = feed.gameData
-  const awayBatting = liveState.half === 'top'
+  const awayBatting = !liveState.isGameOver && liveState.half === 'top'
+  const homeBatting = !liveState.isGameOver && liveState.half === 'bottom'
 
   return (
     <div className={styles.bar}>
@@ -34,13 +35,15 @@ export function ScoreBug({ feed, liveState }: ScoreBugProps) {
           <span className={styles.score}>{liveState.awayScore}</span>
         </span>
 
-        <span className={styles.dash}>-</span>
+        <span className={[styles.dash, liveState.isGameOver ? styles.final : ''].join(' ')}>
+          {liveState.isGameOver ? 'FINAL' : '-'}
+        </span>
 
-        <span className={[styles.teamLine, !awayBatting ? styles.batting : ''].join(' ')}>
+        <span className={[styles.teamLine, homeBatting ? styles.batting : ''].join(' ')}>
           {teams.home.abbreviation}
           <span className={styles.score}>{liveState.homeScore}</span>
           <img className={styles.logo} src={buildTeamLogoUrl(teams.home.id)} alt="" />
-          <img className={styles.batIcon} src={BAT_ICON_URL} alt={!awayBatting ? 'At bat' : ''} style={{ visibility: !awayBatting ? 'visible' : 'hidden' }} />
+          <img className={styles.batIcon} src={BAT_ICON_URL} alt={homeBatting ? 'At bat' : ''} style={{ visibility: homeBatting ? 'visible' : 'hidden' }} />
         </span>
       </div>
 

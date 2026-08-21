@@ -12,6 +12,8 @@ export type GameStateAction =
   | { type: 'playResolved'; play: Play }
   /** Live-mode drift correction — replaces the base/out/score subset without touching batter/pitcher identity. */
   | { type: 'reconciled'; bases: GameState['bases']; outs: number; awayScore: number; homeScore: number }
+  /** Fired once the animation queue has fully drained and the underlying game has no more plays left to give. */
+  | { type: 'gameEnded' }
 
 export function gameStateReducer(state: GameState, action: GameStateAction): GameState {
   switch (action.type) {
@@ -59,5 +61,8 @@ export function gameStateReducer(state: GameState, action: GameStateAction): Gam
 
     case 'reconciled':
       return { ...state, bases: action.bases, outs: action.outs, awayScore: action.awayScore, homeScore: action.homeScore }
+
+    case 'gameEnded':
+      return state.isGameOver ? state : { ...state, isGameOver: true }
   }
 }
