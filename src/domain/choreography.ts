@@ -17,7 +17,7 @@ const BATTER_POP_POSITION: NormalizedPoint = {
 
 /** FIELDER_POSITIONS_NORMALIZED['2'] is the catcher; the umpire's call pops just to their right. */
 const UMPIRE_CALL_POSITION: NormalizedPoint = {
-  x: FIELDER_POSITIONS_NORMALIZED['2'].x + 0.05,
+  x: FIELDER_POSITIONS_NORMALIZED['2'].x + 0.1,
   y: FIELDER_POSITIONS_NORMALIZED['2'].y,
 }
 const PITCH_CALL_POP_DURATION_MS = 600

@@ -24,6 +24,8 @@ export interface GameState {
   homeScore: number
   bases: Record<BaseKey, number | null>
   batterId: number | null
+  /** Which batter's box the batter stands in — switch hitters resolve to whichever side they're actually batting from. */
+  batSide: 'L' | 'R'
   pitcherId: number | null
   lastPlayDescription: string | null
   isScoringPlay: boolean
@@ -40,6 +42,7 @@ export function createInitialGameState(): GameState {
     homeScore: 0,
     bases: { first: null, second: null, third: null },
     batterId: null,
+    batSide: 'R',
     pitcherId: null,
     lastPlayDescription: null,
     isScoringPlay: false,

@@ -20,6 +20,7 @@ export function hydrateFromLiveFeed(feed: GameFeed): GameState {
       third: linescore.offense.third?.id ?? null,
     },
     batterId: linescore.offense.batter?.id ?? null,
+    batSide: currentPlay?.matchup.batSide?.code === 'L' ? 'L' : 'R',
     pitcherId: linescore.defense.pitcher?.id ?? null,
     lastPlayDescription: currentPlay?.result.description ?? null,
     isScoringPlay: currentPlay?.about.isScoringPlay ?? false,

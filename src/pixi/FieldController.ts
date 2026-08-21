@@ -15,7 +15,10 @@ import { GrassParticles } from './GrassParticles'
 import { SpritePool } from './SpritePool'
 import { getCachedCircularHeadshot } from './textures'
 
-const BATTER_BOX_OFFSET: NormalizedPoint = { x: -0.025, y: 0.005 }
+// Right-handed batters stand on the third-base side of the plate (lower x in this image, since
+// third base sits at a lower x than home); left-handed batters mirror to the first-base side.
+const BATTER_BOX_OFFSET_RIGHT: NormalizedPoint = { x: -0.025, y: 0.005 }
+const BATTER_BOX_OFFSET_LEFT: NormalizedPoint = { x: 0.025, y: 0.005 }
 const RUNNER_TOKEN_DIAMETER = 44
 const SINGLETON_TOKEN_DIAMETER = 52
 const FIELDER_TOKEN_DIAMETER = 40
@@ -41,6 +44,7 @@ export class FieldController {
   private batterSprite = new Sprite()
   private pitcherSprite = new Sprite()
   private currentBatterId: number | null = null
+  private currentBatSide: 'L' | 'R' = 'R'
 
   private fielderSprites = new Map<PositionCode, Sprite>()
   private runnerPool: SpritePool<Sprite>
@@ -145,15 +149,20 @@ export class FieldController {
     sprite.position.set(px.x, px.y)
   }
 
+  private batterBoxOffset(): NormalizedPoint {
+    return this.currentBatSide === 'L' ? BATTER_BOX_OFFSET_LEFT : BATTER_BOX_OFFSET_RIGHT
+  }
+
   private reprojectStatic(): void {
     for (const [position, sprite] of this.fielderSprites) {
       this.placeAt(sprite, FIELDER_POSITIONS_NORMALIZED[position])
     }
     this.placeAt(this.pitcherSprite, BASE_ANCHORS_NORMALIZED.mound)
     if (this.currentBatterId !== null) {
+      const offset = this.batterBoxOffset()
       this.placeAt(this.batterSprite, {
-        x: BASE_ANCHORS_NORMALIZED.home.x + BATTER_BOX_OFFSET.x,
-        y: BASE_ANCHORS_NORMALIZED.home.y + BATTER_BOX_OFFSET.y,
+        x: BASE_ANCHORS_NORMALIZED.home.x + offset.x,
+        y: BASE_ANCHORS_NORMALIZED.home.y + offset.y,
       })
     }
   }
@@ -166,15 +175,17 @@ export class FieldController {
     this.placeAt(this.pitcherSprite, BASE_ANCHORS_NORMALIZED.mound)
   }
 
-  setBatter(mlbId: number | null): void {
+  setBatter(mlbId: number | null, batSide: 'L' | 'R' = 'R'): void {
     this.currentBatterId = mlbId
+    this.currentBatSide = batSide
     this.batterSprite.texture = (mlbId !== null && getCachedCircularHeadshot(mlbId)) || this.placeholderTexture
     this.batterSprite.width = SINGLETON_TOKEN_DIAMETER
     this.batterSprite.height = SINGLETON_TOKEN_DIAMETER
     this.batterSprite.visible = mlbId !== null
+    const offset = this.batterBoxOffset()
     this.placeAt(this.batterSprite, {
-      x: BASE_ANCHORS_NORMALIZED.home.x + BATTER_BOX_OFFSET.x,
-      y: BASE_ANCHORS_NORMALIZED.home.y + BATTER_BOX_OFFSET.y,
+      x: BASE_ANCHORS_NORMALIZED.home.x + offset.x,
+      y: BASE_ANCHORS_NORMALIZED.home.y + offset.y,
     })
   }
 

@@ -35,7 +35,7 @@ export class AnimationEngine {
     this.stepRunner = new StepRunner(field)
     this.state = initialState
     this.field.snapBases(this.state.bases)
-    this.field.setBatter(this.state.batterId)
+    this.field.setBatter(this.state.batterId, this.state.batSide)
     this.field.setPitcher(this.state.pitcherId)
   }
 
@@ -80,7 +80,7 @@ export class AnimationEngine {
     const { matchup } = item.play
     if (this.state.batterId !== matchup.batter.id || this.state.pitcherId !== matchup.pitcher.id) {
       this.setState(gameStateReducer(this.state, { type: 'atBatStarted', play: item.play }))
-      this.field.setBatter(this.state.batterId)
+      this.field.setBatter(this.state.batterId, this.state.batSide)
       this.field.setPitcher(this.state.pitcherId)
     }
 

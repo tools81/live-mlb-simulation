@@ -24,6 +24,7 @@ export function gameStateReducer(state: GameState, action: GameStateAction): Gam
       return {
         ...state,
         batterId: matchup.batter.id,
+        batSide: matchup.batSide?.code === 'L' ? 'L' : 'R',
         pitcherId: matchup.pitcher.id,
         inning: about.inning,
         half: about.halfInning,

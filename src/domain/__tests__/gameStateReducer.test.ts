@@ -16,6 +16,28 @@ function makePlay(overrides: Partial<Play>): Play {
 }
 
 describe('gameStateReducer', () => {
+  it('picks up the new batter\'s handedness for the batter\'s box, defaulting to right', () => {
+    const state = createInitialGameState()
+
+    const lefty = makePlay({
+      about: { atBatIndex: 0, inning: 1, halfInning: 'top', isComplete: false, isScoringPlay: false },
+      matchup: { batter: { id: 10 }, pitcher: { id: 20 }, batSide: { code: 'L' } },
+    })
+    expect(gameStateReducer(state, { type: 'atBatStarted', play: lefty }).batSide).toBe('L')
+
+    const righty = makePlay({
+      about: { atBatIndex: 1, inning: 1, halfInning: 'top', isComplete: false, isScoringPlay: false },
+      matchup: { batter: { id: 11 }, pitcher: { id: 20 }, batSide: { code: 'R' } },
+    })
+    expect(gameStateReducer(state, { type: 'atBatStarted', play: righty }).batSide).toBe('R')
+
+    const noBatSideData = makePlay({
+      about: { atBatIndex: 2, inning: 1, halfInning: 'top', isComplete: false, isScoringPlay: false },
+      matchup: { batter: { id: 12 }, pitcher: { id: 20 } },
+    })
+    expect(gameStateReducer(state, { type: 'atBatStarted', play: noBatSideData }).batSide).toBe('R')
+  })
+
   it('updates inning and half as soon as a new at-bat starts', () => {
     const state = createInitialGameState()
     const play = makePlay({
