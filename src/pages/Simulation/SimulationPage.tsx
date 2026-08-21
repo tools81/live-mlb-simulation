@@ -59,7 +59,7 @@ export function SimulationPage() {
         </Link>
         {rawFeed && (
           <>
-            <PitcherCard feed={rawFeed} pitcherId={liveState.pitcherId} />
+            <PitcherCard key={gamePk} feed={rawFeed} pitcherId={liveState.pitcherId} half={liveState.half} />
             <BatterCard feed={rawFeed} batterId={liveState.batterId} />
             <OnDeckPanel feed={rawFeed} />
             <LiveScoresPanel games={otherLiveGames} />
