@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { BatterCard } from '../../components/BatterCard/BatterCard'
 import { FieldStage } from '../../components/FieldStage/FieldStage'
 import { LiveScoresPanel } from '../../components/LiveScoresPanel/LiveScoresPanel'
@@ -42,6 +42,9 @@ export function SimulationPage() {
   return (
     <div className={styles.layout}>
       <div className={styles.scorebug}>
+        <Link to="/" className={styles.backButton}>
+          ← Games
+        </Link>
         {rawFeed ? <ScoreBug feed={rawFeed} liveState={liveState} /> : <div className={styles.loading}>Loading game…</div>}
       </div>
 

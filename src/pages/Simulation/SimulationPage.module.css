@@ -13,6 +13,34 @@
 
 .scorebug {
   grid-area: scorebug;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.scorebug > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.7rem 1rem;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.backButton:hover {
+  border-color: var(--color-accent);
 }
 
 .field {
