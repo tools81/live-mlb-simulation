@@ -49,6 +49,34 @@ describe('resolvePitchChoreography', () => {
 
     expect(fast.durationMs).toBeLessThan(slow.durationMs)
   })
+
+  it('pops a white BALL/STRIKE/FOUL call after the pitch, positioned right of the catcher', () => {
+    const cases: { details: PlayEvent['details']; expected: 'BALL' | 'STRIKE' | 'FOUL' }[] = [
+      { details: { isBall: true, call: { code: 'B', description: 'Ball' } }, expected: 'BALL' },
+      { details: { isStrike: true, call: { code: 'C', description: 'Called Strike' } }, expected: 'STRIKE' },
+      { details: { isStrike: true, call: { code: 'S', description: 'Swinging Strike' } }, expected: 'STRIKE' },
+      { details: { isStrike: true, call: { code: 'F', description: 'Foul' } }, expected: 'FOUL' },
+    ]
+
+    for (const { details, expected } of cases) {
+      const steps = resolvePitchChoreography({ isPitch: true, index: 0, type: 'pitch', details })
+      const pop = steps.find((s): s is TextPopStep => s.kind === 'textPop')
+      expect(pop?.text).toBe(expected)
+      expect(pop?.tone).toBe('neutral') // renders in white
+      expect(pop!.group).toBeGreaterThan(steps.find((s) => s.kind === 'ballFlight')!.group)
+      expect(pop!.at.x).toBeGreaterThan(FIELDER_POSITIONS_NORMALIZED['2'].x)
+    }
+  })
+
+  it('does not pop a call for a pitch put in play', () => {
+    const steps = resolvePitchChoreography({
+      isPitch: true,
+      index: 0,
+      type: 'pitch',
+      details: { isInPlay: true, isStrike: true, call: { code: 'X', description: 'In play, out(s)' } },
+    })
+    expect(steps.some((s) => s.kind === 'textPop')).toBe(false)
+  })
 })
 
 describe('resolveOutcomeChoreography', () => {

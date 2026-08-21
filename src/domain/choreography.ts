@@ -15,6 +15,13 @@ const BATTER_POP_POSITION: NormalizedPoint = {
   y: BASE_ANCHORS_NORMALIZED.home.y - 0.08,
 }
 
+/** FIELDER_POSITIONS_NORMALIZED['2'] is the catcher; the umpire's call pops just to their right. */
+const UMPIRE_CALL_POSITION: NormalizedPoint = {
+  x: FIELDER_POSITIONS_NORMALIZED['2'].x + 0.05,
+  y: FIELDER_POSITIONS_NORMALIZED['2'].y,
+}
+const PITCH_CALL_POP_DURATION_MS = 600
+
 const FT_PER_SEC_PER_MPH = 1.467
 const PITCH_TRAVEL_DISTANCE_FT = 55
 
@@ -25,9 +32,19 @@ function pitchDurationMs(startSpeedMph: number | undefined): number {
   return Math.max(250, Math.min(900, seconds * 1000))
 }
 
-/** Choreography for a single live pitch: the ball travels from the mound to home plate. */
+/** The umpire's call for a pitch not put in play — null for anything else (e.g. ball in play). */
+function pitchCallLabel(event: PlayEvent): 'STRIKE' | 'FOUL' | 'BALL' | null {
+  if (event.details.isInPlay) return null
+  const description = (event.details.call?.description ?? event.details.description ?? '').toLowerCase()
+  if (description.includes('foul')) return 'FOUL'
+  if (event.details.isBall) return 'BALL'
+  if (event.details.isStrike) return 'STRIKE'
+  return null
+}
+
+/** Choreography for a single live pitch: the ball travels from the mound to home plate, then the umpire's call briefly pops beside the catcher. */
 export function resolvePitchChoreography(event: PlayEvent): ChoreographyStep[] {
-  return [
+  const steps: ChoreographyStep[] = [
     {
       kind: 'ballFlight',
       group: 0,
@@ -39,6 +56,20 @@ export function resolvePitchChoreography(event: PlayEvent): ChoreographyStep[] {
       easing: Easing.linear,
     },
   ]
+
+  const label = pitchCallLabel(event)
+  if (label) {
+    steps.push({
+      kind: 'textPop',
+      group: 1,
+      text: label,
+      at: UMPIRE_CALL_POSITION,
+      tone: 'neutral',
+      durationMs: PITCH_CALL_POP_DURATION_MS,
+    })
+  }
+
+  return steps
 }
 
 const HIT_EVENT_TYPES = new Set(['single', 'double', 'triple', 'home_run'])
