@@ -308,6 +308,65 @@ describe('resolveOutcomeChoreography', () => {
     expect(fielderSteps[1].group).toBeGreaterThan(relay.group)
   })
 
+  it('relays through every fielder on a multi-out double play, not just the first one credited ("6 to 4 to 3")', () => {
+    // Mirrors a real "Sal Stewart grounds into a double play, shortstop JJ Wetherholt to second
+    // baseman Bryan Torres to first baseman Alec Burleson" play: MLB splits the one continuous
+    // relay across each retired runner's own entry (SS assist -> 2B putout for the first out,
+    // then 2B assist -> 1B putout for the second), sharing the 2B fielder at the boundary.
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Double Play', eventType: 'double_play', awayScore: 0, homeScore: 0 },
+      runners: [
+        makeRunner({
+          runnerId: 21,
+          movement: { start: '1B', end: null, outBase: '2B', isOut: true, outNumber: 1 },
+          credits: [
+            { position: { code: '6' }, credit: 'f_assist' },
+            { position: { code: '4' }, credit: 'f_putout' },
+          ],
+        }),
+        makeRunner({
+          runnerId: 22,
+          movement: { start: null, end: null, outBase: '1B', isOut: true, outNumber: 2 },
+          credits: [
+            { position: { code: '4' }, credit: 'f_assist' },
+            { position: { code: '3' }, credit: 'f_putout' },
+          ],
+        }),
+      ],
+      playEvents: [
+        {
+          isPitch: true,
+          index: 0,
+          type: 'pitch',
+          details: { isInPlay: true },
+          hitData: { trajectory: 'ground_ball', totalDistance: 60, coordinates: { coordX: 110, coordY: 160 } },
+        },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+
+    // Only the fielding fielder (SS) ever moves off their spot -- to the ball, then back.
+    const fielderSteps = steps.filter((s): s is FielderMoveStep => s.kind === 'fielderMove')
+    expect(fielderSteps).toHaveLength(2)
+    expect(fielderSteps.every((s) => s.position === '6')).toBe(true)
+    expect(fielderSteps[1].to).toEqual(FIELDER_POSITIONS_NORMALIZED['6'])
+
+    // The ball travels: batted to SS, thrown SS -> 2B, thrown 2B -> 1B -- three flights, two relays.
+    const allBallFlights = steps.filter((s): s is BallFlightStep => s.kind === 'ballFlight')
+    expect(allBallFlights).toHaveLength(3)
+    const [initial, relayToSecond, relayToFirst] = allBallFlights
+    expect(relayToSecond.from).toEqual(initial.to)
+    expect(relayToSecond.to).toEqual(FIELDER_POSITIONS_NORMALIZED['4'])
+    expect(relayToFirst.from).toEqual(relayToSecond.to)
+    expect(relayToFirst.to).toEqual(FIELDER_POSITIONS_NORMALIZED['3'])
+
+    // Chronological order: fielded -> relay 1 -> relay 2 -> fielder returns.
+    expect(relayToSecond.group).toBeGreaterThan(initial.group)
+    expect(relayToFirst.group).toBeGreaterThan(relayToSecond.group)
+    expect(fielderSteps[1].group).toBeGreaterThan(relayToFirst.group)
+  })
+
   it('adds a celebration step for a home run', () => {
     const play = makePlay({
       result: { type: 'atBat', event: 'Home Run', eventType: 'home_run', awayScore: 1, homeScore: 0 },

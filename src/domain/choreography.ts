@@ -89,20 +89,37 @@ function nearestFielderPosition(point: NormalizedPoint): PositionCode {
 }
 
 /**
- * The fielders credited on this play, in the feed's own order — which is the actual chronological
- * order of the play (e.g. "third baseman X to first baseman Y" -> credits list the 3B assist
- * before the 1B putout). Empty if the feed has no credits at all (rare/older data).
+ * The full relay chain of fielders credited on this play, in chronological order -- e.g. "third
+ * baseman X to first baseman Y" resolves to ['5', '3'].
+ *
+ * On a multi-out play (double/triple play), the feed splits the one continuous relay across each
+ * retired runner's own `runners[]` entry: the first runner's credits cover the throw up through
+ * their own putout (e.g. SS assist -> 2B putout), and the next runner's credits cover the *next*
+ * leg, restarting from that same fielder (e.g. 2B assist -> 3B putout) -- because that fielder's
+ * catch is simultaneously the putout for one runner and the assist for the next. So the full
+ * physical relay has to be reassembled by concatenating every runner's sub-chain in the order
+ * their outs actually happened (`outNumber`), merging the shared fielder at each boundary rather
+ * than listing it twice.
  */
 function creditedFielderChain(play: Play): PositionCode[] {
-  for (const runner of play.runners) {
-    if (!runner.credits || runner.credits.length === 0) continue
-    const codes = runner.credits
-      .filter((c) => c.credit.includes('assist') || c.credit.includes('putout'))
-      .map((c) => c.position.code)
-      .filter((code): code is PositionCode => (ALL_FIELDER_POSITIONS as string[]).includes(code))
-    if (codes.length > 0) return codes
+  const subChains = play.runners
+    .map((runner) => {
+      const codes = (runner.credits ?? [])
+        .filter((c) => c.credit.includes('assist') || c.credit.includes('putout'))
+        .map((c) => c.position.code)
+        .filter((code): code is PositionCode => (ALL_FIELDER_POSITIONS as string[]).includes(code))
+      return { outNumber: runner.movement.outNumber ?? 0, codes }
+    })
+    .filter(({ codes }) => codes.length > 0)
+    .sort((a, b) => a.outNumber - b.outNumber)
+
+  const chain: PositionCode[] = []
+  for (const { codes } of subChains) {
+    for (const code of codes) {
+      if (chain[chain.length - 1] !== code) chain.push(code)
+    }
   }
-  return []
+  return chain
 }
 
 /** Where the batted ball actually lands/is fielded — the raw (approximate) hit coordinate. */
