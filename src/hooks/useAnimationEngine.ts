@@ -43,8 +43,12 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
       const initialFeed = await getLiveFeed(gamePk)
       if (cancelled) return
 
-      const rosterIds = Object.values(initialFeed.gameData.players).map((player) => player.id)
-      await prefetchRoster(field.renderer, rosterIds)
+      const roster = Object.values(initialFeed.gameData.players)
+      field.loadRoster(roster)
+      await prefetchRoster(
+        field.renderer,
+        roster.map((player) => player.id),
+      )
       if (cancelled) return
 
       rawFeedStore.set(initialFeed)

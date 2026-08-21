@@ -66,6 +66,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.record {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
 .score {

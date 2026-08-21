@@ -21,20 +21,45 @@ export function GameCard({ game }: GameCardProps) {
     <button className={styles.card} onClick={() => navigate(`/game/${game.gamePk}?mode=${mode}`)}>
       <span className={[styles.status, statusClass].filter(Boolean).join(' ')}>{statusLabel}</span>
       <span className={styles.teams}>
-        <TeamRow teamId={game.teams.away.team.id} name={game.teams.away.team.name} score={game.teams.away.score} showScore={isLive || isFinal} />
-        <TeamRow teamId={game.teams.home.team.id} name={game.teams.home.team.name} score={game.teams.home.score} showScore={isLive || isFinal} />
+        <TeamRow
+          teamId={game.teams.away.team.id}
+          name={game.teams.away.team.name}
+          record={game.teams.away.leagueRecord}
+          score={game.teams.away.score}
+          showScore={isLive || isFinal}
+        />
+        <TeamRow
+          teamId={game.teams.home.team.id}
+          name={game.teams.home.team.name}
+          record={game.teams.home.leagueRecord}
+          score={game.teams.home.score}
+          showScore={isLive || isFinal}
+        />
       </span>
       <span className={styles.venue}>{game.venue.name}</span>
     </button>
   )
 }
 
-function TeamRow({ teamId, name, score, showScore }: { teamId: number; name: string; score?: number; showScore: boolean }) {
+interface TeamRowProps {
+  teamId: number
+  name: string
+  record?: { wins: number; losses: number }
+  score?: number
+  showScore: boolean
+}
+
+function TeamRow({ teamId, name, record, score, showScore }: TeamRowProps) {
   return (
     <span className={styles.team}>
       <span className={styles.teamInfo}>
         <img src={buildTeamLogoUrl(teamId)} alt="" />
         <span className={styles.teamName}>{name}</span>
+        {record && (
+          <span className={styles.record}>
+            {record.wins}-{record.losses}
+          </span>
+        )}
       </span>
       {showScore && <span className={styles.score}>{score ?? 0}</span>}
     </span>

@@ -19,6 +19,7 @@ export interface ScheduleTeamSide {
   team: { id: number; name: string }
   score?: number
   isWinner?: boolean
+  leagueRecord?: { wins: number; losses: number; ties: number; pct: string }
 }
 
 export interface GameStatus {
@@ -184,6 +185,8 @@ export interface BoxscoreTeam {
 export interface BoxscorePlayer {
   person: { id: number; fullName: string }
   position?: { code: string; abbreviation: string }
+  /** Lineup spot as "N00" (e.g. "300" = batting 3rd); the trailing digits track in-game substitutions. */
+  battingOrder?: string
   stats: {
     batting?: BattingStats
     pitching?: PitchingStats

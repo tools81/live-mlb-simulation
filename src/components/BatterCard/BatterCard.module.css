@@ -24,6 +24,14 @@
   font-weight: 700;
 }
 
+.meta {
+  margin-left: 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: none;
+}
+
 .statLine {
   font-size: 0.8rem;
   color: var(--color-text-muted);
