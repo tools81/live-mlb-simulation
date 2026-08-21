@@ -9,6 +9,7 @@ export class BallTrail {
   private sprites: Sprite[]
   private cursor = 0
   private diameter: number
+  private tint = 0xffffff
 
   constructor(container: Container, texture: Texture, ballDiameter: number) {
     this.diameter = ballDiameter * TRAIL_DIAMETER_RATIO
@@ -35,11 +36,16 @@ export class BallTrail {
     for (const sprite of this.sprites) sprite.visible = false
   }
 
+  setTint(tint: number): void {
+    this.tint = tint
+  }
+
   sample(x: number, y: number): void {
     const sprite = this.sprites[this.cursor]
     sprite.position.set(x, y)
     sprite.visible = true
     sprite.alpha = 0.45
+    sprite.tint = this.tint
     this.cursor = (this.cursor + 1) % this.sprites.length
   }
 

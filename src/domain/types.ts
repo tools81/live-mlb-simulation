@@ -96,6 +96,10 @@ export interface BallFlightStep extends BaseStep {
   to: NormalizedPoint
   arcHeight: number
   spin: boolean
+  /** Tints the ball + its trail for this flight (e.g. by batted-ball trajectory); omitted = natural color. */
+  tint?: number
+  /** Kicks up small grass-blade particles along the flight path (ground balls). */
+  spawnGrassParticles?: boolean
 }
 
 export interface RunnerMoveStep extends BaseStep {

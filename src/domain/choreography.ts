@@ -102,6 +102,25 @@ function ballFlightDurationMs(totalDistanceFt: number | undefined, isHomeRun: bo
   return isHomeRun ? base * 1.4 : base
 }
 
+const GROUND_BALL_TINT = 0x5fd15f
+const LINE_DRIVE_TINT = 0xe0483e
+const FLY_BALL_TINT = 0x4fa8f0
+const HOME_RUN_TINT = 0xffd54a
+
+function trailTintFor(trajectory: string | undefined, isHomeRun: boolean): number | undefined {
+  if (isHomeRun) return HOME_RUN_TINT
+  switch (trajectory) {
+    case 'ground_ball':
+      return GROUND_BALL_TINT
+    case 'line_drive':
+      return LINE_DRIVE_TINT
+    case 'fly_ball':
+      return FLY_BALL_TINT
+    default:
+      return undefined
+  }
+}
+
 /**
  * Choreography for a completed at-bat's outcome: the batted ball (if any), every runner's
  * movement per `runners[]` (the authoritative source — never inferred from eventType), and any
@@ -132,6 +151,8 @@ export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
       spin: true,
       durationMs: flightDurationMs,
       easing: Easing.easeOutQuad,
+      tint: trailTintFor(inPlayEvent.hitData?.trajectory, isHomeRun),
+      spawnGrassParticles: inPlayEvent.hitData?.trajectory === 'ground_ball',
     })
 
     // On an out (fly out, pop out, line out, ground out), the fielder who made the play visibly

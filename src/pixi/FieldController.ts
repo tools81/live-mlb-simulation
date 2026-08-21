@@ -11,6 +11,7 @@ import type {
   TextPopStep,
 } from '../domain/types'
 import { BallTrail } from './BallTrail'
+import { GrassParticles } from './GrassParticles'
 import { SpritePool } from './SpritePool'
 import { getCachedCircularHeadshot } from './textures'
 
@@ -35,6 +36,7 @@ export class FieldController {
   private stadiumSprite = new Sprite()
   private ball = new Sprite()
   private ballTrail: BallTrail
+  private grassParticles: GrassParticles
 
   private batterSprite = new Sprite()
   private pitcherSprite = new Sprite()
@@ -65,6 +67,7 @@ export class FieldController {
     this.ball.height = BALL_DIAMETER
     this.ballTrail = new BallTrail(this.ballLayer, this.placeholderTexture, BALL_DIAMETER)
     this.ballLayer.addChild(this.ball)
+    this.grassParticles = new GrassParticles(this.ballLayer)
 
     this.runnerPool = new SpritePool(() => {
       const sprite = new Sprite()
@@ -90,6 +93,7 @@ export class FieldController {
     app.ticker.add((ticker) => {
       this.tweens.update(ticker.deltaMS)
       this.ballTrail.update(ticker.deltaMS)
+      this.grassParticles.update(ticker.deltaMS)
     })
   }
 
@@ -249,9 +253,12 @@ export class FieldController {
     const from = this.toPixel(step.from)
     const to = this.toPixel(step.to)
     const arcPx = step.arcHeight * Math.min(this.stageWidth, this.stageHeight)
+    const tint = step.tint ?? 0xffffff
 
     this.ball.visible = true
+    this.ball.tint = tint
     this.ballTrail.reset()
+    this.ballTrail.setTint(tint)
 
     await this.tweens.play({
       from: { x: from.x, y: from.y },
@@ -263,6 +270,9 @@ export class FieldController {
         this.ball.position.set(v.x, v.y - arcOffset)
         if (step.spin) this.ball.rotation += 0.5
         this.ballTrail.sample(this.ball.x, this.ball.y)
+        if (step.spawnGrassParticles && Math.random() < 0.35) {
+          this.grassParticles.spawn(this.ball.x, this.ball.y)
+        }
       },
     })
   }

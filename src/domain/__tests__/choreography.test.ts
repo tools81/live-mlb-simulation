@@ -212,5 +212,42 @@ describe('resolveOutcomeChoreography', () => {
     expect(steps.some((s) => s.kind === 'celebration')).toBe(true)
     const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
     expect(ballFlight?.arcHeight).toBe(0.4)
+    expect(ballFlight?.tint).toBe(0xffd54a)
+  })
+
+  it('tints the ball trail by batted-ball trajectory, and kicks up grass only on ground balls', () => {
+    const trajectories: { trajectory: string; expectedTint: number }[] = [
+      { trajectory: 'ground_ball', expectedTint: 0x5fd15f },
+      { trajectory: 'line_drive', expectedTint: 0xe0483e },
+      { trajectory: 'fly_ball', expectedTint: 0x4fa8f0 },
+    ]
+
+    for (const { trajectory, expectedTint } of trajectories) {
+      const play = makePlay({
+        result: { type: 'atBat', event: 'Flyout', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+        playEvents: [
+          { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory, coordinates: { coordX: 150, coordY: 150 } } },
+        ],
+      })
+
+      const steps = resolveOutcomeChoreography(play)
+      const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
+      expect(ballFlight?.tint).toBe(expectedTint)
+      expect(ballFlight?.spawnGrassParticles).toBe(trajectory === 'ground_ball')
+    }
+  })
+
+  it('leaves an untracked trajectory (e.g. popup) with no tint', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Pop Out', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+      playEvents: [
+        { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory: 'popup', coordinates: { coordX: 130, coordY: 190 } } },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
+    expect(ballFlight?.tint).toBeUndefined()
+    expect(ballFlight?.spawnGrassParticles).toBe(false)
   })
 })
