@@ -19,12 +19,14 @@ export function gameStateReducer(state: GameState, action: GameStateAction): Gam
       return action.state
 
     case 'atBatStarted': {
-      const { matchup } = action.play
+      const { matchup, about } = action.play
       if (state.batterId === matchup.batter.id && state.pitcherId === matchup.pitcher.id) return state
       return {
         ...state,
         batterId: matchup.batter.id,
         pitcherId: matchup.pitcher.id,
+        inning: about.inning,
+        half: about.halfInning,
         balls: 0,
         strikes: 0,
       }
@@ -43,6 +45,8 @@ export function gameStateReducer(state: GameState, action: GameStateAction): Gam
         ...state,
         bases: applyRunnerMovements(state.bases, play.runners),
         outs: play.count.outs,
+        inning: play.about.inning,
+        half: play.about.halfInning,
         awayScore: play.result.awayScore,
         homeScore: play.result.homeScore,
         balls: 0,
