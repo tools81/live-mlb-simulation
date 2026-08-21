@@ -33,11 +33,11 @@ export function BatterCard({ feed, batterId }: BatterCardProps) {
             <div className={styles.name}>
               {player.fullName}
               {(orderSpot !== null || box?.position) && (
-                <span className={styles.meta}>
+                <div className={styles.meta}>
                   {orderSpot !== null ? `Batting ${ordinal(orderSpot)}` : null}
                   {orderSpot !== null && box?.position ? ' · ' : null}
                   {box?.position?.abbreviation ?? null}
-                </span>
+                </div>
               )}
             </div>
             <div className={styles.statLine}>

@@ -26,6 +26,8 @@
 .backButton {
   display: flex;
   align-items: center;
+  justify-content: center;
+  align-self: flex-end;
   gap: 0.4rem;
   flex-shrink: 0;
   background: var(--color-surface);

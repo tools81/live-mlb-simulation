@@ -43,9 +43,6 @@ export function SimulationPage() {
     <div className={styles.layout}>
       <div className={styles.scorebug}>
         {rawFeed ? <ScoreBug feed={rawFeed} liveState={liveState} /> : <div className={styles.loading}>Loading game…</div>}
-        <Link to="/" className={styles.backButton}>
-          ← Games
-        </Link>
       </div>
 
       <div className={styles.field}>
@@ -56,15 +53,20 @@ export function SimulationPage() {
         <PlayTicker description={liveState.lastPlayDescription} isScoringPlay={liveState.isScoringPlay} />
       </div>
 
-      {rawFeed && (
-        <div className={styles.sidebar}>
-          <PitcherCard feed={rawFeed} pitcherId={liveState.pitcherId} />
-          <BatterCard feed={rawFeed} batterId={liveState.batterId} />
-          <OnDeckPanel feed={rawFeed} />
-          <LiveScoresPanel games={otherLiveGames} />
-          <SettingsPanel mode={mode} />
-        </div>
-      )}
+      <div className={styles.sidebar}>
+        <Link to="/" className={styles.backButton}>
+          ← Games
+        </Link>
+        {rawFeed && (
+          <>
+            <PitcherCard feed={rawFeed} pitcherId={liveState.pitcherId} />
+            <BatterCard feed={rawFeed} batterId={liveState.batterId} />
+            <OnDeckPanel feed={rawFeed} />
+            <LiveScoresPanel games={otherLiveGames} />
+            <SettingsPanel mode={mode} />
+          </>
+        )}
+      </div>
     </div>
   )
 }

@@ -228,6 +228,41 @@ describe('resolveOutcomeChoreography', () => {
     expect(steps.some((s) => s.kind === 'fielderMove')).toBe(true)
   })
 
+  it('calls a fly out/pop out/line out "OUT" at the fielder who caught it, and never runs the batter to first', () => {
+    for (const trajectory of ['fly_ball', 'popup', 'line_drive'] as const) {
+      const play = makePlay({
+        result: { type: 'atBat', event: 'Flyout', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+        // The feed still marks the batter's own entry "out at 1B" even though they never ran.
+        runners: [makeRunner({ runnerId: 1, movement: { start: null, end: null, outBase: '1B', isOut: true } })],
+        playEvents: [
+          { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory, coordinates: { coordX: 150, coordY: 100 } } },
+        ],
+      })
+
+      const steps = resolveOutcomeChoreography(play)
+      expect(steps.some((s) => s.kind === 'runnerMove')).toBe(false)
+      const fielderMove = steps.find((s): s is FielderMoveStep => s.kind === 'fielderMove')
+      const outCall = steps.find((s): s is TextPopStep => s.kind === 'textPop' && s.text === 'OUT')
+      expect(outCall).toBeDefined()
+      expect(outCall?.at).toEqual(fielderMove?.to)
+    }
+  })
+
+  it('still calls a ground out "OUT" at first base, since the batter really is thrown out there', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Groundout', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+      runners: [makeRunner({ runnerId: 1, movement: { start: null, end: null, outBase: '1B', isOut: true } })],
+      playEvents: [
+        { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory: 'ground_ball', coordinates: { coordX: 130, coordY: 160 } } },
+      ],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const runnerStep = steps.find((s): s is RunnerMoveStep => s.kind === 'runnerMove' && s.playerId === 1)
+    expect(runnerStep).toBeDefined()
+    expect(runnerStep?.isOut).toBe(true)
+  })
+
   it('relays the ball from the fielding fielder to the putout fielder before either resets ("3B to 1B")', () => {
     // Mirrors a real "Matt McLain grounds out, third baseman Blaze Jordan to first baseman Alec
     // Burleson" play's actual credits shape.
@@ -294,6 +329,7 @@ describe('resolveOutcomeChoreography', () => {
       { trajectory: 'ground_ball', expectedTint: 0x5fd15f },
       { trajectory: 'line_drive', expectedTint: 0xe0483e },
       { trajectory: 'fly_ball', expectedTint: 0x4fa8f0 },
+      { trajectory: 'popup', expectedTint: 0x4fa8f0 },
     ]
 
     for (const { trajectory, expectedTint } of trajectories) {
@@ -311,11 +347,11 @@ describe('resolveOutcomeChoreography', () => {
     }
   })
 
-  it('leaves an untracked trajectory (e.g. popup) with no tint', () => {
+  it('leaves an untracked trajectory (e.g. missing hitData) with no tint', () => {
     const play = makePlay({
-      result: { type: 'atBat', event: 'Pop Out', eventType: 'field_out', awayScore: 0, homeScore: 0 },
+      result: { type: 'atBat', event: 'Field Out', eventType: 'field_out', awayScore: 0, homeScore: 0 },
       playEvents: [
-        { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { trajectory: 'popup', coordinates: { coordX: 130, coordY: 190 } } },
+        { isPitch: true, index: 0, type: 'pitch', details: { isInPlay: true }, hitData: { coordinates: { coordX: 130, coordY: 190 } } },
       ],
     })
 

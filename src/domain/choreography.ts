@@ -153,6 +153,7 @@ function trailTintFor(trajectory: string | undefined, isHomeRun: boolean): numbe
     case 'line_drive':
       return LINE_DRIVE_TINT
     case 'fly_ball':
+    case 'popup':
       return FLY_BALL_TINT
     default:
       return undefined
@@ -174,11 +175,19 @@ export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
   const isHit = HIT_EVENT_TYPES.has(eventType)
   const isStrikeout = eventType.includes('strikeout')
   const inPlayEvent = play.playEvents.find((e) => e.details.isInPlay)
+  const trajectory = inPlayEvent?.hitData?.trajectory
+  // A batter put out on a fly ball, popup, or line drive never actually runs -- the feed still
+  // records their runners[] entry as "out at 1B" (its generic marker for a batter out), but the
+  // "OUT" call belongs at the fielder who caught it, not at first base. Ground outs are the real
+  // exception: the batter genuinely is thrown out at first there, so that one keeps the base call.
+  const isAerialOut = !isHit && (trajectory === 'fly_ball' || trajectory === 'popup' || trajectory === 'line_drive')
 
   let group = 0
+  let ballDestinationPoint: NormalizedPoint | undefined
 
   if (inPlayEvent) {
     const destination = ballDestination(play, inPlayEvent)
+    ballDestinationPoint = destination
     const flightDurationMs = ballFlightDurationMs(inPlayEvent.hitData?.totalDistance, isHomeRun)
 
     steps.push({
@@ -263,6 +272,13 @@ export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
     // baserunning event, and the "K" pop already communicates it. Animating it as a move to (and
     // "OUT" call at) some base reads as the batter running out a strikeout, which never happens.
     if (isStrikeout && runner.details.runner.id === play.matchup.batter.id) continue
+
+    // Likewise, a fly out/pop out/line out batter never runs -- call it "OUT" at the fielder who
+    // caught the ball instead of animating a phantom trip to first.
+    if (isAerialOut && ballDestinationPoint && runner.details.runner.id === play.matchup.batter.id) {
+      outCalls.push({ at: ballDestinationPoint, group: runnerGroupStart })
+      continue
+    }
 
     const target = (runner.movement.isOut ? runner.movement.outBase : runner.movement.end) as BaseCode
     const legs = expandBasePath(runner.movement.start as BaseCode, target)
