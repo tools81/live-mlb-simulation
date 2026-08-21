@@ -1,4 +1,5 @@
 import type { Play, PlayEvent } from '../api/types'
+import type { PositionCode } from './coordinates'
 
 export interface NormalizedPoint {
   x: number
@@ -118,4 +119,10 @@ export interface CelebrationStep extends BaseStep {
   at: NormalizedPoint
 }
 
-export type ChoreographyStep = BallFlightStep | RunnerMoveStep | TextPopStep | CelebrationStep
+export interface FielderMoveStep extends BaseStep {
+  kind: 'fielderMove'
+  position: PositionCode
+  to: NormalizedPoint
+}
+
+export type ChoreographyStep = BallFlightStep | RunnerMoveStep | TextPopStep | CelebrationStep | FielderMoveStep

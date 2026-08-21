@@ -33,6 +33,8 @@ export class StepRunner {
         return this.field.showTextPop(step)
       case 'celebration':
         return this.field.runCelebration(step)
+      case 'fielderMove':
+        return this.field.runFielderMove(step)
     }
   }
 }

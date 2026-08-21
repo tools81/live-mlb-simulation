@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Play, PlayEvent, RunnerMovement } from '../../api/types'
 import { resolveOutcomeChoreography, resolvePitchChoreography } from '../choreography'
 import { FIELDER_POSITIONS_NORMALIZED } from '../coordinates'
-import type { BallFlightStep, RunnerMoveStep, TextPopStep } from '../types'
+import type { BallFlightStep, FielderMoveStep, RunnerMoveStep, TextPopStep } from '../types'
 
 function makeRunner(overrides: Partial<RunnerMovement> & { runnerId: number }): RunnerMovement {
   return {
@@ -102,7 +102,7 @@ describe('resolveOutcomeChoreography', () => {
     expect(ballFlight!.arcHeight).toBeLessThan(0.1)
   })
 
-  it('sends a caught fly ball to the fielder who actually caught it, not the raw hit coordinate', () => {
+  it('sends the ball to the raw hit coordinate and moves the nearest fielder to meet it, then back', () => {
     const play = makePlay({
       result: { type: 'atBat', event: 'Flyout', eventType: 'field_out', awayScore: 0, homeScore: 0 },
       playEvents: [
@@ -119,10 +119,18 @@ describe('resolveOutcomeChoreography', () => {
 
     const steps = resolveOutcomeChoreography(play)
     const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
-    expect(ballFlight!.to).toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
+    const fielderSteps = steps.filter((s): s is FielderMoveStep => s.kind === 'fielderMove')
+
+    expect(ballFlight!.to).not.toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
+    expect(fielderSteps).toHaveLength(2)
+    expect(fielderSteps[0].position).toBe('9')
+    expect(fielderSteps[0].to).toEqual(ballFlight!.to)
+    // second leg returns them to their default position, in a later group so it doesn't block anything else
+    expect(fielderSteps[1].to).toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
+    expect(fielderSteps[1].group).toBeGreaterThan(fielderSteps[0].group)
   })
 
-  it('does not redirect a home run fly ball to a fielder, even though it is also a fly_ball trajectory', () => {
+  it('does not move any fielder for a hit, even a fly_ball trajectory home run', () => {
     const play = makePlay({
       result: { type: 'atBat', event: 'Home Run', eventType: 'home_run', awayScore: 1, homeScore: 0 },
       playEvents: [
@@ -137,8 +145,7 @@ describe('resolveOutcomeChoreography', () => {
     })
 
     const steps = resolveOutcomeChoreography(play)
-    const ballFlight = steps.find((s): s is BallFlightStep => s.kind === 'ballFlight')
-    expect(ballFlight!.to).not.toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
+    expect(steps.some((s) => s.kind === 'fielderMove')).toBe(false)
   })
 
   it('pops only a K for a strikeout, with no ballFlight and no runner move/OUT for the batter', () => {
@@ -188,6 +195,8 @@ describe('resolveOutcomeChoreography', () => {
     expect(runnerStep?.isOut).toBe(true)
     const outCall = steps.find((s): s is TextPopStep => s.kind === 'textPop' && s.text === 'OUT')
     expect(outCall).toBeDefined()
+    // ground outs move a fielder to field the ball too, not just fly outs
+    expect(steps.some((s) => s.kind === 'fielderMove')).toBe(true)
   })
 
   it('adds a celebration step for a home run', () => {

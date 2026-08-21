@@ -1,7 +1,15 @@
 import { Assets, Container, Graphics, RenderTexture, Sprite, Text, Texture, type Application, type Renderer } from 'pixi.js'
 import { Easing, TweenManager } from '../animation/tween'
 import { BASE_ANCHORS_NORMALIZED, FIELDER_POSITIONS_NORMALIZED, normalizedToPixel, type PositionCode } from '../domain/coordinates'
-import type { BallFlightStep, BaseKey, CelebrationStep, NormalizedPoint, RunnerMoveStep, TextPopStep } from '../domain/types'
+import type {
+  BallFlightStep,
+  BaseKey,
+  CelebrationStep,
+  FielderMoveStep,
+  NormalizedPoint,
+  RunnerMoveStep,
+  TextPopStep,
+} from '../domain/types'
 import { BallTrail } from './BallTrail'
 import { SpritePool } from './SpritePool'
 import { getCachedCircularHeadshot } from './textures'
@@ -171,6 +179,20 @@ export class FieldController {
     if (!sprite) return
     sprite.texture = (mlbId !== null && getCachedCircularHeadshot(mlbId)) || this.placeholderTexture
     sprite.visible = mlbId !== null
+  }
+
+  /** Moves a fielder token to converge on a batted ball (or jog back to their default spot afterward). */
+  async runFielderMove(step: FielderMoveStep): Promise<void> {
+    const sprite = this.fielderSprites.get(step.position)
+    if (!sprite) return
+    const to = this.toPixel(step.to)
+    await this.tweens.play({
+      from: { x: sprite.x, y: sprite.y },
+      to: { x: to.x, y: to.y },
+      durationMs: step.durationMs,
+      easing: step.easing ?? Easing.easeInOutQuad,
+      onUpdate: (v) => sprite.position.set(v.x, v.y),
+    })
   }
 
   private getOrCreateRunnerToken(playerId: number): Sprite {
