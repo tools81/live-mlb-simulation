@@ -18,7 +18,7 @@
   gap: 0.6rem;
 }
 
-.scorebug > :last-child {
+.scorebug > :first-child {
   flex: 1;
   min-width: 0;
 }

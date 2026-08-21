@@ -42,10 +42,10 @@ export function SimulationPage() {
   return (
     <div className={styles.layout}>
       <div className={styles.scorebug}>
+        {rawFeed ? <ScoreBug feed={rawFeed} liveState={liveState} /> : <div className={styles.loading}>Loading game…</div>}
         <Link to="/" className={styles.backButton}>
           ← Games
         </Link>
-        {rawFeed ? <ScoreBug feed={rawFeed} liveState={liveState} /> : <div className={styles.loading}>Loading game…</div>}
       </div>
 
       <div className={styles.field}>

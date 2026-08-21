@@ -12,8 +12,8 @@
 
 .teams {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .teamLine {
@@ -23,13 +23,6 @@
   font-weight: 700;
 }
 
-.logoWrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .logo {
   width: 34px;
   height: 34px;
@@ -37,13 +30,9 @@
 }
 
 .batIcon {
-  position: absolute;
-  right: -8px;
-  bottom: -6px;
-  width: 18px;
-  height: 18px;
+  width: auto;
+  height: 34px;
   object-fit: contain;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .teamLine.batting {
@@ -54,6 +43,11 @@
   font-variant-numeric: tabular-nums;
   min-width: 1.6em;
   text-align: right;
+}
+
+.dash {
+  color: var(--color-text-muted);
+  font-weight: 700;
 }
 
 .center {

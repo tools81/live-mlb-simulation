@@ -28,20 +28,19 @@ export function ScoreBug({ feed, liveState }: ScoreBugProps) {
     <div className={styles.bar}>
       <div className={styles.teams}>
         <span className={[styles.teamLine, awayBatting ? styles.batting : ''].join(' ')}>
-          <span className={styles.logoWrap}>
-            <img className={styles.logo} src={buildTeamLogoUrl(teams.away.id)} alt="" />
-            {awayBatting && <img className={styles.batIcon} src={BAT_ICON_URL} alt="At bat" />}
-          </span>
+          <img className={styles.batIcon} src={BAT_ICON_URL} alt={awayBatting ? 'At bat' : ''} style={{ visibility: awayBatting ? 'visible' : 'hidden' }} />
+          <img className={styles.logo} src={buildTeamLogoUrl(teams.away.id)} alt="" />
           {teams.away.abbreviation}
           <span className={styles.score}>{liveState.awayScore}</span>
         </span>
+
+        <span className={styles.dash}>-</span>
+
         <span className={[styles.teamLine, !awayBatting ? styles.batting : ''].join(' ')}>
-          <span className={styles.logoWrap}>
-            <img className={styles.logo} src={buildTeamLogoUrl(teams.home.id)} alt="" />
-            {!awayBatting && <img className={styles.batIcon} src={BAT_ICON_URL} alt="At bat" />}
-          </span>
           {teams.home.abbreviation}
           <span className={styles.score}>{liveState.homeScore}</span>
+          <img className={styles.logo} src={buildTeamLogoUrl(teams.home.id)} alt="" />
+          <img className={styles.batIcon} src={BAT_ICON_URL} alt={!awayBatting ? 'At bat' : ''} style={{ visibility: !awayBatting ? 'visible' : 'hidden' }} />
         </span>
       </div>
 
