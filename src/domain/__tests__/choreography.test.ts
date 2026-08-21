@@ -141,17 +141,37 @@ describe('resolveOutcomeChoreography', () => {
     expect(ballFlight!.to).not.toEqual(FIELDER_POSITIONS_NORMALIZED['9'])
   })
 
-  it('marks a runner out at the outBase and pops an OUT call, without a ballFlight for a strikeout', () => {
+  it('pops only a K for a strikeout, with no ballFlight and no runner move/OUT for the batter', () => {
     const play = makePlay({
       result: { type: 'atBat', event: 'Strikeout', eventType: 'strikeout', awayScore: 0, homeScore: 0 },
-      runners: [],
+      // MLB's feed includes a runners[] entry for the batter on a strikeout (their own out) —
+      // this must NOT be animated as the batter running to (and being called out at) a base.
+      runners: [makeRunner({ runnerId: 1, movement: { start: null, end: null, outBase: '1B', isOut: true } })],
       playEvents: [{ isPitch: true, index: 0, type: 'pitch', details: { isStrike: true } }],
     })
 
     const steps = resolveOutcomeChoreography(play)
     expect(steps.some((s) => s.kind === 'ballFlight')).toBe(false)
+    expect(steps.some((s) => s.kind === 'runnerMove')).toBe(false)
+    expect(steps.filter((s) => s.kind === 'textPop')).toHaveLength(1)
     const textPop = steps.find((s): s is TextPopStep => s.kind === 'textPop')
     expect(textPop?.text).toBe('K')
+  })
+
+  it('still animates a caught-stealing runner during a strikeout, only skipping the batter', () => {
+    const play = makePlay({
+      result: { type: 'atBat', event: 'Strikeout', eventType: 'strikeout', awayScore: 0, homeScore: 0 },
+      runners: [
+        makeRunner({ runnerId: 1, movement: { start: null, end: null, outBase: '1B', isOut: true } }),
+        makeRunner({ runnerId: 2, movement: { start: '1B', end: null, outBase: '2B', isOut: true } }),
+      ],
+      playEvents: [{ isPitch: true, index: 0, type: 'pitch', details: { isStrike: true } }],
+    })
+
+    const steps = resolveOutcomeChoreography(play)
+    const runnerSteps = steps.filter((s): s is RunnerMoveStep => s.kind === 'runnerMove')
+    expect(runnerSteps).toHaveLength(1)
+    expect(runnerSteps[0].playerId).toBe(2)
   })
 
   it('animates a force out to the outBase and tags it as out', () => {

@@ -140,6 +140,11 @@ export function resolveOutcomeChoreography(play: Play): ChoreographyStep[] {
   const outCalls: { at: NormalizedPoint; group: number }[] = []
 
   for (const runner of play.runners) {
+    // The batter's own runners[] entry on a strikeout just records the out — it's not a
+    // baserunning event, and the "K" pop already communicates it. Animating it as a move to (and
+    // "OUT" call at) some base reads as the batter running out a strikeout, which never happens.
+    if (isStrikeout && runner.details.runner.id === play.matchup.batter.id) continue
+
     const target = (runner.movement.isOut ? runner.movement.outBase : runner.movement.end) as BaseCode
     const legs = expandBasePath(runner.movement.start as BaseCode, target)
     if (legs.length === 0) continue
