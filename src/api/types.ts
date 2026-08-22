@@ -13,6 +13,8 @@ export interface ScheduleGame {
     away: ScheduleTeamSide
   }
   venue: { id: number; name: string }
+  /** Present once a game is underway (via `hydrate=linescore`); absent for a not-yet-started game. */
+  linescore?: { currentInning: number; isTopInning: boolean }
 }
 
 export interface ScheduleTeamSide {

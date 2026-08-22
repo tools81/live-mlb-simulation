@@ -9,9 +9,9 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await response.json()) as T
 }
 
-/** date is an ISO date string, e.g. "2026-08-20". */
+/** date is an ISO date string, e.g. "2026-08-20". `hydrate=linescore` adds each game's current inning (only populated once a game is actually underway). */
 export function getSchedule(date: string): Promise<ScheduleResponse> {
-  const url = `${MLB_API_BASE}/api/v1/schedule?sportId=1&date=${date}`
+  const url = `${MLB_API_BASE}/api/v1/schedule?sportId=1&date=${date}&hydrate=linescore`
   return fetchJson<ScheduleResponse>(url)
 }
 
