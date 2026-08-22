@@ -39,9 +39,9 @@ export function ScoreBug({ feed, liveState }: ScoreBugProps) {
           {liveState.isGameOver ? 'FINAL' : '-'}
         </span>
 
-        <span className={[styles.teamLine, homeBatting ? styles.batting : ''].join(' ')}>
-          {teams.home.abbreviation}
+        <span className={[styles.teamLine, homeBatting ? styles.batting : ''].join(' ')}>          
           <span className={styles.score}>{liveState.homeScore}</span>
+          {teams.home.abbreviation}
           <img className={styles.logo} src={buildTeamLogoUrl(teams.home.id)} alt="" />
           <img className={styles.batIcon} src={BAT_ICON_URL} alt={homeBatting ? 'At bat' : ''} style={{ visibility: homeBatting ? 'visible' : 'hidden' }} />
         </span>
