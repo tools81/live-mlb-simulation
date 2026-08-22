@@ -23,6 +23,9 @@ export function gameStateReducer(state: GameState, action: GameStateAction): Gam
     case 'atBatStarted': {
       const { matchup, about } = action.play
       if (state.batterId === matchup.batter.id && state.pitcherId === matchup.pitcher.id) return state
+      // A half-inning is (inning, half) together -- top of the 1st and top of the 2nd both read
+      // as 'top', but they're different teams' turns at bat and the out count must not carry over.
+      const battingTeamChanged = state.inning !== about.inning || state.half !== about.halfInning
       return {
         ...state,
         batterId: matchup.batter.id,
@@ -32,6 +35,7 @@ export function gameStateReducer(state: GameState, action: GameStateAction): Gam
         half: about.halfInning,
         balls: 0,
         strikes: 0,
+        outs: battingTeamChanged ? 0 : state.outs,
       }
     }
 
