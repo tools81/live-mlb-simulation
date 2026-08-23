@@ -24,14 +24,14 @@
 }
 
 .logo {
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
 
 .batIcon {
   width: auto;
-  height: 25.5px;
+  height: 32px;
   object-fit: contain;
 }
 
@@ -41,7 +41,7 @@
 
 .score {
   font-variant-numeric: tabular-nums;
-  min-width: 1.6em;
+  /* min-width: 1.6em; */
   text-align: right;
 }
 
