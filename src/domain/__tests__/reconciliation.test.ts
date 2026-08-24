@@ -79,6 +79,35 @@ describe('reconstructGameStateAsOf', () => {
     expect(result.outs).toBe(0)
   })
 
+  it('clears a stranded runner the instant the 3rd out is recorded, without waiting for the next half-inning to start', () => {
+    const plays: Play[] = [
+      play({
+        about: { atBatIndex: 0, halfInning: 'top', inning: 1, isComplete: true, isScoringPlay: false },
+        count: { balls: 0, strikes: 0, outs: 2 },
+        runners: [
+          {
+            movement: { start: null, end: '2B', outBase: null, isOut: false },
+            details: { runner: { id: 101 }, isScoringEvent: false },
+          },
+        ],
+      }),
+      play({
+        about: { atBatIndex: 1, halfInning: 'top', inning: 1, isComplete: true, isScoringPlay: false },
+        count: { balls: 0, strikes: 0, outs: 3 },
+        runners: [
+          {
+            movement: { start: null, end: null, outBase: 'home', isOut: true, outNumber: 3 },
+            details: { runner: { id: 202 }, isScoringEvent: false },
+          },
+        ],
+      }),
+    ]
+
+    const result = reconstructGameStateAsOf(plays, 1)
+    expect(result.bases).toEqual({ first: null, second: null, third: null })
+    expect(result.outs).toBe(3)
+  })
+
   it('ignores the still-in-progress at-bat', () => {
     const plays: Play[] = [
       play({ about: { atBatIndex: 0, halfInning: 'top', inning: 1, isComplete: false, isScoringPlay: false } }),

@@ -31,6 +31,13 @@ export function reconstructGameStateAsOf(allPlays: Play[], uptoAtBatIndexInclusi
     outs = play.count.outs
     awayScore = play.result.awayScore
     homeScore = play.result.homeScore
+
+    // The 3rd out ends the half-inning immediately. Any runner this particular play didn't
+    // mention (i.e. stranded, not the one who made the out) would otherwise sit in `bases` until
+    // the next half's first play triggers the boundary clear above -- one full at-bat too late.
+    if (outs >= 3) {
+      bases = { first: null, second: null, third: null }
+    }
   }
 
   return { bases, outs, awayScore, homeScore, inning, half }

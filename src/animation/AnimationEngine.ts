@@ -114,8 +114,13 @@ export class AnimationEngine {
           homeScore: reconciled.homeScore,
         }),
       )
-      this.field.snapBases(this.state.bases)
     }
+
+    // Always re-sync the on-field runner tokens to the authoritative reconciled bases at the
+    // conclusion of every at-bat, not just when the logical GameState itself looked wrong -- a
+    // token can be stranded on screen (e.g. a missed/skipped choreography step) even when
+    // `state.bases` was already correct, and snapBases is a cheap no-op when nothing drifted.
+    this.field.snapBases(reconciled.bases)
   }
 
   destroy(): void {
