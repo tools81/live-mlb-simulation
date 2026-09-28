@@ -1,4 +1,5 @@
 import type { GameFeed, Linescore, Play } from '../api/types'
+import type { Narrator } from '../audio/Narrator'
 import { resolveOutcomeChoreography, resolvePitchChoreography } from '../domain/choreography'
 import { diffFeed } from '../domain/playDiffer'
 import { reconcileWithLinescore, reconstructGameStateAsOf } from '../domain/reconciliation'
@@ -29,10 +30,12 @@ export class AnimationEngine {
   private sourceExhausted = false
   private field: FieldController
   private mode: Mode
+  private narrator: Narrator | null
 
-  constructor(field: FieldController, mode: Mode, initialState: GameState) {
+  constructor(field: FieldController, mode: Mode, initialState: GameState, narrator: Narrator | null = null) {
     this.field = field
     this.mode = mode
+    this.narrator = narrator
     this.stepRunner = new StepRunner(field)
     this.state = initialState
     this.field.snapBases(this.state.bases)
@@ -99,8 +102,12 @@ export class AnimationEngine {
       return
     }
 
+    // Start synthesizing the play-by-play while the play animates, so speech is ready the moment
+    // the ticker updates rather than only then kicking off the TTS round trip.
+    const utterance = this.narrator?.prepare(item.play.result.description) ?? null
     await this.stepRunner.run(resolveOutcomeChoreography(item.play))
     this.setState(gameStateReducer(this.state, { type: 'playResolved', play: item.play }))
+    const speech = utterance?.play()
 
     const expected = reconstructGameStateAsOf(this.allPlaysSeen, item.play.about.atBatIndex)
     const reconciled = reconcileWithLinescore(expected, this.latestLinescore)
@@ -121,9 +128,14 @@ export class AnimationEngine {
     // token can be stranded on screen (e.g. a missed/skipped choreography step) even when
     // `state.bases` was already correct, and snapBases is a cheap no-op when nothing drifted.
     this.field.snapBases(reconciled.bases)
+
+    // A replay controls its own pacing, so hold the queue until the call is finished. Live games
+    // can't wait -- falling behind real time is worse, and the next play simply interrupts.
+    if (this.mode === 'replay' && speech) await speech
   }
 
   destroy(): void {
+    this.narrator?.stop()
     this.listeners.clear()
   }
 }

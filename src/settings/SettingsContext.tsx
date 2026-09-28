@@ -12,11 +12,15 @@ import {
 export interface Settings {
   pollIntervalMs: number
   replayIntervalMs: number
+  narrationMuted: boolean
+  geminiApiKey: string
 }
 
 const DEFAULT_SETTINGS: Settings = {
   pollIntervalMs: DEFAULT_LIVE_POLL_INTERVAL_MS,
   replayIntervalMs: DEFAULT_REPLAY_REVEAL_INTERVAL_MS,
+  narrationMuted: false,
+  geminiApiKey: '',
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -35,6 +39,8 @@ function loadSettings(): Settings {
         MIN_REPLAY_INTERVAL_MS,
         MAX_REPLAY_INTERVAL_MS,
       ),
+      narrationMuted: parsed.narrationMuted ?? DEFAULT_SETTINGS.narrationMuted,
+      geminiApiKey: parsed.geminiApiKey ?? DEFAULT_SETTINGS.geminiApiKey,
     }
   } catch {
     return DEFAULT_SETTINGS
@@ -45,6 +51,8 @@ interface SettingsContextValue {
   settings: Settings
   setPollIntervalMs: (ms: number) => void
   setReplayIntervalMs: (ms: number) => void
+  setNarrationMuted: (muted: boolean) => void
+  setGeminiApiKey: (apiKey: string) => void
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
@@ -62,6 +70,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setSettings((prev) => ({ ...prev, pollIntervalMs: clamp(ms, MIN_POLL_INTERVAL_MS, MAX_POLL_INTERVAL_MS) })),
     setReplayIntervalMs: (ms) =>
       setSettings((prev) => ({ ...prev, replayIntervalMs: clamp(ms, MIN_REPLAY_INTERVAL_MS, MAX_REPLAY_INTERVAL_MS) })),
+    setNarrationMuted: (muted) => setSettings((prev) => ({ ...prev, narrationMuted: muted })),
+    setGeminiApiKey: (apiKey) => setSettings((prev) => ({ ...prev, geminiApiKey: apiKey })),
   }
 
   return <SettingsContext value={value}>{children}</SettingsContext>

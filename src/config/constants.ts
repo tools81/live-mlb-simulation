@@ -41,3 +41,14 @@ export const STADIUM_IMAGE_URL = `${import.meta.env.BASE_URL}assets/stadium.webp
 export const BASEBALL_ICON_URL = `${import.meta.env.BASE_URL}assets/baseball.svg`
 export const BAT_ICON_URL = `${import.meta.env.BASE_URL}assets/baseball_bat.svg`
 export const HEAVY_TOOL_LOGO_URL = `${import.meta.env.BASE_URL}assets/heavy_tool_logo.png`
+
+export const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com'
+export const GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts'
+export const GEMINI_TTS_VOICE = 'Schedar'
+export const GEMINI_TTS_STYLE = 'an energetic baseball radio play-by-play announcer'
+/** Streamed Gemini-TTS audio defaults to 24 kHz mono 16-bit PCM when a chunk doesn't say otherwise. */
+export const GEMINI_TTS_SAMPLE_RATE = 24000
+/** Optional build-time key for local dev (.env.local); otherwise the key comes from the Settings panel. */
+export const GEMINI_API_KEY_FROM_ENV: string = import.meta.env.VITE_GEMINI_API_KEY ?? ''
+/** Upper bound on how long a replay will hold the queue for a single spoken play, in case audio stalls. */
+export const NARRATION_WATCHDOG_MS = 30000

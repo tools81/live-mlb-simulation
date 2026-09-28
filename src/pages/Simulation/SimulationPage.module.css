@@ -1,10 +1,10 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   grid-template-areas:
-    'scorebug sidebar'
     'field sidebar'
+    'scorebug sidebar'
     'ticker sidebar';
   gap: 0.75rem;
   height: 100vh;
@@ -23,6 +23,13 @@
   min-width: 0;
 }
 
+.topButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .backButton {
   display: flex;
   align-items: center;
@@ -38,6 +45,8 @@
   font-weight: 600;
   font-size: 0.85rem;
   text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
   transition: border-color 0.15s ease;
 }
 
@@ -82,8 +91,8 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto;
     grid-template-areas:
-      'scorebug'
       'field'
+      'scorebug'
       'ticker'
       'sidebar';
     height: auto;

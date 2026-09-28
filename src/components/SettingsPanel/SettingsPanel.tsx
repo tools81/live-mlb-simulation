@@ -1,3 +1,4 @@
+import { GEMINI_API_KEY_FROM_ENV } from '../../config/constants'
 import type { SimulationMode } from '../../hooks/useAnimationEngine'
 import { useSettings } from '../../settings/SettingsContext'
 import styles from './SettingsPanel.module.css'
@@ -12,7 +13,7 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ mode, isPaused, onTogglePause }: SettingsPanelProps) {
-  const { settings, setPollIntervalMs, setReplayIntervalMs } = useSettings()
+  const { settings, setPollIntervalMs, setReplayIntervalMs, setGeminiApiKey } = useSettings()
   const presets = mode === 'live' ? LIVE_PRESETS_MS : REPLAY_PRESETS_MS
   const value = mode === 'live' ? settings.pollIntervalMs : settings.replayIntervalMs
   const setValue = mode === 'live' ? setPollIntervalMs : setReplayIntervalMs
@@ -34,6 +35,16 @@ export function SettingsPanel({ mode, isPaused, onTogglePause }: SettingsPanelPr
       >
         {isPaused ? '▶ Resume' : '⏸ Pause'}
       </button>
+      <span className={styles.label}>Gemini API Key</span>
+      <input
+        type="password"
+        className={styles.select}
+        value={settings.geminiApiKey}
+        onChange={(e) => setGeminiApiKey(e.target.value)}
+        placeholder={GEMINI_API_KEY_FROM_ENV ? 'Using key from build env' : 'Needed for spoken play-by-play'}
+        autoComplete="off"
+        spellCheck={false}
+      />
     </div>
   )
 }

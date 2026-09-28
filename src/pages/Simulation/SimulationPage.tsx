@@ -14,6 +14,7 @@ import { useAnimationEngine, type SimulationMode } from '../../hooks/useAnimatio
 import { useLiveGameState } from '../../hooks/useLiveGameState'
 import { useOtherLiveScores } from '../../hooks/useOtherLiveScores'
 import { usePixiApp } from '../../hooks/usePixiApp'
+import { useSettings } from '../../settings/SettingsContext'
 import styles from './SimulationPage.module.css'
 
 const ALL_POSITIONS: PositionCode[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -29,6 +30,8 @@ export function SimulationPage() {
   const { engine, rawFeed, isPaused, togglePause } = useAnimationEngine(gamePk, mode, field)
   const liveState = useLiveGameState(engine)
   const otherLiveGames = useOtherLiveScores(gamePk)
+  const { settings, setNarrationMuted } = useSettings()
+  const muted = settings.narrationMuted
 
   useEffect(() => {
     if (!field || !rawFeed) return
@@ -41,12 +44,12 @@ export function SimulationPage() {
 
   return (
     <div className={styles.layout}>
-      <div className={styles.scorebug}>
-        {rawFeed ? <ScoreBug feed={rawFeed} liveState={liveState} /> : <div className={styles.loading}>Loading game…</div>}
-      </div>
-
       <div className={styles.field}>
         <FieldStage containerRef={containerRef} />
+      </div>
+
+      <div className={styles.scorebug}>
+        {rawFeed ? <ScoreBug feed={rawFeed} liveState={liveState} /> : <div className={styles.loading}>Loading game…</div>}
       </div>
 
       <div className={styles.ticker}>
@@ -54,9 +57,21 @@ export function SimulationPage() {
       </div>
 
       <div className={styles.sidebar}>
-        <Link to="/" className={styles.backButton}>
-          ← Games
-        </Link>
+        <div className={styles.topButtons}>
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={() => setNarrationMuted(!muted)}
+            aria-pressed={muted}
+            aria-label={muted ? 'Unmute play-by-play' : 'Mute play-by-play'}
+            title={muted ? 'Unmute play-by-play' : 'Mute play-by-play'}
+          >
+            {muted ? '🔇' : '🔊'}
+          </button>
+          <Link to="/" className={styles.backButton}>
+            ← Games
+          </Link>
+        </div>
         {rawFeed && (
           <>
             <PitcherCard key={gamePk} feed={rawFeed} pitcherId={liveState.pitcherId} half={liveState.half} />

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { getLiveFeed } from '../api/mlbApi'
 import type { GameFeed } from '../api/types'
 import { AnimationEngine } from '../animation/AnimationEngine'
-import { BASEBALL_ICON_URL, STADIUM_IMAGE_URL } from '../config/constants'
+import { Narrator } from '../audio/Narrator'
+import { BASEBALL_ICON_URL, GEMINI_API_KEY_FROM_ENV, STADIUM_IMAGE_URL } from '../config/constants'
 import { createInitialGameState, INITIAL_CURSOR, type Cursor } from '../domain/types'
 import { hydrateFromLiveFeed } from '../domain/hydrate'
 import { cursorAtEndOf } from '../domain/playDiffer'
@@ -31,6 +32,7 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
   const rawFeed = useSyncExternalStore(rawFeedStore.subscribe, rawFeedStore.getSnapshot)
   const sourceRef = useRef<GameFeedSource | null>(null)
   const [isPaused, setIsPaused] = useState(false)
+  const [narrator] = useState(() => new Narrator())
 
   useEffect(() => {
     if (!field) return
@@ -60,7 +62,7 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
       const initialState = mode === 'live' ? hydrateFromLiveFeed(initialFeed) : createInitialGameState()
       let cursor: Cursor = mode === 'live' ? cursorAtEndOf(initialFeed.liveData.plays.allPlays) : INITIAL_CURSOR
 
-      localEngine = new AnimationEngine(field, mode, initialState)
+      localEngine = new AnimationEngine(field, mode, initialState, narrator)
       setEngine(localEngine)
 
       const intervalMs = mode === 'live' ? settings.pollIntervalMs : settings.replayIntervalMs
@@ -86,11 +88,19 @@ export function useAnimationEngine(gamePk: number, mode: SimulationMode, field: 
     }
     // Intentionally excludes `settings` — the initial interval is captured once here; later
     // changes are pushed to the running source by the effect below without tearing everything down.
-  }, [field, gamePk, mode])
+  }, [field, gamePk, mode, narrator])
 
   useEffect(() => {
     sourceRef.current?.setInterval(mode === 'live' ? settings.pollIntervalMs : settings.replayIntervalMs)
   }, [mode, settings.pollIntervalMs, settings.replayIntervalMs])
+
+  useEffect(() => {
+    narrator.setMuted(settings.narrationMuted)
+  }, [narrator, settings.narrationMuted])
+
+  useEffect(() => {
+    narrator.setApiKey(settings.geminiApiKey || GEMINI_API_KEY_FROM_ENV)
+  }, [narrator, settings.geminiApiKey])
 
   const togglePause = useCallback(() => {
     setIsPaused((paused) => {
