@@ -22,6 +22,10 @@ export interface GameState {
   strikes: number
   awayScore: number
   homeScore: number
+  /** Runs scored per inning, index 0 = 1st inning -- the line score, advanced in lockstep like the total. */
+  inningRuns: { away: number[]; home: number[] }
+  hits: { away: number; home: number }
+  errors: { away: number; home: number }
   bases: Record<BaseKey, number | null>
   batterId: number | null
   /** Which batter's box the batter stands in — switch hitters resolve to whichever side they're actually batting from. */
@@ -43,6 +47,9 @@ export function createInitialGameState(): GameState {
     strikes: 0,
     awayScore: 0,
     homeScore: 0,
+    inningRuns: { away: [], home: [] },
+    hits: { away: 0, home: 0 },
+    errors: { away: 0, home: 0 },
     bases: { first: null, second: null, third: null },
     batterId: null,
     batSide: 'R',

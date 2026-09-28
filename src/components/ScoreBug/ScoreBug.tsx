@@ -3,6 +3,7 @@ import type { GameFeed } from '../../api/types'
 import { BAT_ICON_URL } from '../../config/constants'
 import type { GameState } from '../../domain/types'
 import { BaseDiamond } from './BaseDiamond'
+import { LineScore } from './LineScore'
 import styles from './ScoreBug.module.css'
 
 interface ScoreBugProps {
@@ -68,10 +69,7 @@ export function ScoreBug({ feed, liveState }: ScoreBugProps) {
         </div>
       </div>
 
-      <div className={styles.hitsErrors}>
-        <span>Hits {feed.liveData.linescore.teams.away.hits}-{feed.liveData.linescore.teams.home.hits}</span>
-        <span>Errors {feed.liveData.linescore.teams.away.errors}-{feed.liveData.linescore.teams.home.errors}</span>
-      </div>
+      <LineScore feed={feed} liveState={liveState} />
     </div>
   )
 }

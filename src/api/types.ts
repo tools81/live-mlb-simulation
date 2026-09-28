@@ -112,6 +112,7 @@ export interface RunnerMovement {
     eventType?: string
     runner: { id: number; fullName?: string }
     isScoringEvent: boolean
+    playIndex?: number
   }
   credits?: { position: { code: string }; credit: string }[]
 }

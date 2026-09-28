@@ -14,6 +14,12 @@ export function hydrateFromLiveFeed(feed: GameFeed): GameState {
     strikes: linescore.strikes,
     awayScore: linescore.teams.away.runs,
     homeScore: linescore.teams.home.runs,
+    inningRuns: {
+      away: linescore.innings.map((inning) => inning.away?.runs ?? 0),
+      home: linescore.innings.map((inning) => inning.home?.runs ?? 0),
+    },
+    hits: { away: linescore.teams.away.hits, home: linescore.teams.home.hits },
+    errors: { away: linescore.teams.away.errors, home: linescore.teams.home.errors },
     bases: {
       first: linescore.offense.first?.id ?? null,
       second: linescore.offense.second?.id ?? null,

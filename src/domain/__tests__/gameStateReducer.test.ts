@@ -149,6 +149,56 @@ describe('gameStateReducer', () => {
     expect(next.half).toBe('bottom')
   })
 
+  it('credits runs to the inning they scored in, in lockstep with the running total', () => {
+    let state = createInitialGameState()
+    const topThird = makePlay({
+      about: { atBatIndex: 5, inning: 3, halfInning: 'top', isComplete: true, isScoringPlay: true },
+      result: { type: 'atBat', awayScore: 2, homeScore: 0 },
+    })
+    state = gameStateReducer(state, { type: 'playResolved', play: topThird })
+    const bottomThird = makePlay({
+      about: { atBatIndex: 8, inning: 3, halfInning: 'bottom', isComplete: true, isScoringPlay: true },
+      result: { type: 'atBat', awayScore: 2, homeScore: 1 },
+    })
+    state = gameStateReducer(state, { type: 'playResolved', play: bottomThird })
+    const topFifth = makePlay({
+      about: { atBatIndex: 14, inning: 5, halfInning: 'top', isComplete: true, isScoringPlay: true },
+      result: { type: 'atBat', awayScore: 3, homeScore: 1 },
+    })
+    state = gameStateReducer(state, { type: 'playResolved', play: topFifth })
+
+    expect(state.inningRuns.away[2]).toBe(2)
+    expect(state.inningRuns.away[4]).toBe(1)
+    expect(state.inningRuns.home[2]).toBe(1)
+    expect(state.inningRuns.away[3] ?? 0).toBe(0)
+
+    // A live drift correction lands in the current inning's column.
+    state = gameStateReducer(state, { type: 'reconciled', bases: state.bases, outs: 0, awayScore: 4, homeScore: 1 })
+    expect(state.inningRuns.away[4]).toBe(2)
+  })
+
+  it('tallies hits for the batting team and deduped errors for the fielding team', () => {
+    const errorCredit = { position: { code: '6' }, credit: 'f_fielding_error' }
+    const single = makePlay({
+      about: { atBatIndex: 0, inning: 1, halfInning: 'top', isComplete: true, isScoringPlay: false },
+      result: { type: 'atBat', eventType: 'single', awayScore: 0, homeScore: 0 },
+    })
+    const fieldError = makePlay({
+      about: { atBatIndex: 1, inning: 1, halfInning: 'top', isComplete: true, isScoringPlay: false },
+      result: { type: 'atBat', eventType: 'field_error', awayScore: 0, homeScore: 0 },
+      runners: [
+        { movement: { start: null, end: '1B', outBase: null, isOut: false }, details: { runner: { id: 1 }, isScoringEvent: false, playIndex: 3 }, credits: [errorCredit] },
+        { movement: { start: '1B', end: '3B', outBase: null, isOut: false }, details: { runner: { id: 2 }, isScoringEvent: false, playIndex: 3 }, credits: [errorCredit] },
+      ],
+    })
+
+    let state = gameStateReducer(createInitialGameState(), { type: 'playResolved', play: single })
+    state = gameStateReducer(state, { type: 'playResolved', play: fieldError })
+
+    expect(state.hits).toEqual({ away: 1, home: 0 })
+    expect(state.errors).toEqual({ away: 0, home: 1 })
+  })
+
   it('marks the game over, idempotently', () => {
     const state = createInitialGameState()
     expect(state.isGameOver).toBe(false)

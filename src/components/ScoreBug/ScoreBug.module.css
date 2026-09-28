@@ -64,12 +64,56 @@
   flex: 1;
 }
 
-.hitsErrors {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  color: var(--color-text-muted);
+.lineScore {
+  display: grid;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
   font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lineScore > span {
+  padding: 0.2rem 0.35rem;
+  text-align: center;
+  border-left: 1px solid var(--color-border);
+}
+
+.lineHeader {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.lineScore .lineCorner {
+  border-left: none;
+}
+
+.lineScore .lineTeam {
+  text-align: left;
+  font-weight: 700;
+  border-left: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.lineCell {
+  border-top: 1px solid var(--color-border);
+}
+
+.lineCellCurrent {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  font-weight: 700;
+}
+
+.lineTotal {
+  border-top: 1px solid var(--color-border);
+  font-weight: 700;
+}
+
+.lineScore .lineTotalFirst {
+  border-left: 2px solid var(--color-border);
 }
 
 .inning {
@@ -165,10 +209,11 @@
     gap: 1rem;
   }
 
-  .hitsErrors {
-    flex-direction: row;
-    justify-content: center;
-    gap: 1.2rem;
+  .lineScore {
+    align-self: center;
+    max-width: 100%;
+    overflow-x: auto;
+    font-size: 0.72rem;
   }
 
   .logo {
